@@ -200,23 +200,27 @@ PxRigidDynamic* PhysicsCreate::createDynamicPlane(WOPhysicX* data) {
 }
 
 void PhysicsCreate::hitten() {
+	cout << "****************************" << endl;
+	cout << "!!!!Entering HITTEN()!!!!!!" << endl;
 	if (this->planeActor) {
 		const size_t nExplodeMissiles = this->explodeMissileActors.size();
 
 		for (PxU32 i = 0; i < nExplodeMissiles; i++) {
 			PxRigidDynamic* currentExplode = this->explodeMissileActors[i];
+			PxVec3 explosionPos = currentExplode->getGlobalPose().p;
 
-			//remove missile
 			std::vector<PxRigidDynamic*>::iterator missileIter = std::find(
 				this->missileActors.begin(), this->missileActors.end(), currentExplode);
-			if (missileIter != this->missileActors.end())
+			//remove missile
+			if (missileIter != this->missileActors.end()) {
 				this->missileActors.erase(missileIter);
-			this->scene->removeActor(*currentExplode);
-			//delete currentExplode;
+				explodeMissileActors.erase(missileIter);
+			}
+			//currentExplode->release();			
 
 			// damage to target
 			static const PxReal strength = 100.0f;
-			PxVec3 explosion = this->planeActor->getGlobalPose().p - currentExplode->getGlobalPose().p;
+			PxVec3 explosion = this->planeActor->getGlobalPose().p - explosionPos;
 			PxReal len = explosion.normalize();
 			PxReal damage = strength * (1.0f / len);
 			explosion *= damage;
@@ -262,7 +266,11 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 			if ((pairHeader.actors[0] == this->planeActor) || (pairHeader.actors[1] == this->planeActor))
 			{
 				PxActor* otherActor = (this->planeActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
+				//PxTransform trans = PxTransform(PxVec3(data->getPosition().x, data->getPosition().y, data->getPosition().z));
+				//PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
+				//PxRigidDynamic* missile = PxCreateDynamic(*this->physics, trans, *shape, 10.0f);
 				PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor->userData);
+
 				// insert only once
 				if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
 					this->explodeMissileActors.push_back(missile);
@@ -271,6 +279,7 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 			}
 		}
 	}
+
 	while (nbPairs--)
 	{
 		const PxContactPair& current = *pairs++;
@@ -290,6 +299,9 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 
 		cout << current.shapes[0] << endl;
 	}
+
+
+	this->hitten();
 }
 
 void PhysicsCreate::onTrigger(PxTriggerPair* pairs, PxU32 count) {
