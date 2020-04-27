@@ -110,9 +110,9 @@ void GLViewNewModule::onCreate()
 	}
 
 	//Set background music with 2D Sound when starting the program.
-	this->smgr = SoundManager::init();
-	this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
-	this->smgr->getSound2D().at(0)->setVolume(0.5f);
+	//this->smgr = SoundManager::init();
+	//this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
+	//this->smgr->getSound2D().at(0)->setVolume(0.5f);
 
 	this->triangleMesh->createGrid();
 }
@@ -205,25 +205,79 @@ void GLViewNewModule::onMouseMove(const SDL_MouseMotionEvent& e)
 void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 {
 	GLView::onKeyDown(key);
-	if (key.keysym.sym == SDLK_0)
-		this->setNumPhysicsStepsPerRender(1);
+	actor = actorLst->at(0);
+	//actor->getLabel()
+	//NetMsgCreate* nmc = new NetMsgCreate();
+	this->nmc->setCamPos(cam->getPosition());
+	this->nmc->setCamLookDir(cam->getLookDirection());
 
-	if (key.keysym.sym == SDLK_1)
+	//if (key.keysym.sym == SDLK_1)
+	//{
+	//	std::string shinyRedPlasticCube(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl");
+	//	WOPhysicX* cubeWO = WOPhysicX::New(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl", Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+	//	cubeWO->setPosition(Vector(100, 200, 20));
+	//	cubeWO->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
+	//	worldLst->push_back(cubeWO);
+	//	actorLst->push_back(cubeWO);
+	//	cubeWO->setEngine(this->physEngine);
+	//	physx::PxRigidDynamic* da = this->physEngine->createDynamic(cubeWO);
+	//	this->physEngine->addToScene(da);
+	//}
+
+	if (key.keysym.sym == SDLK_q) {
+		this->physEngine->shutdown();
+	}
+	// down
+	if (key.keysym.sym == SDLK_s)
 	{
-		std::string shinyRedPlasticCube(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl");
-		WOPhysicX* cubeWO = WOPhysicX::New(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl", Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-		cubeWO->setPosition(Vector(100, 200, 20));
-		cubeWO->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
-		worldLst->push_back(cubeWO);
-		actorLst->push_back(cubeWO);
-		cubeWO->setEngine(this->physEngine);
-		physx::PxRigidDynamic* da = this->physEngine->createDynamic(cubeWO);
+		Vector look_dir = actor->getLookDirection();
+		actor->moveRelative(look_dir * -1);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(0.0f);
+	}
+	// up
+	if (key.keysym.sym == SDLK_w)
+	{
+		Vector look_dir = actor->getLookDirection();
+		actor->moveRelative(look_dir);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(0.0f);
+	}
+	// left
+	if (key.keysym.sym == SDLK_a)
+	{
+		actor->getModel()->rotateAboutGlobalZ(0.3f);
+		Vector look_dir = actor->getLookDirection();
+		actor->moveRelative(look_dir * 1.5f);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(0.3f);
+	}
+	// right
+	if (key.keysym.sym == SDLK_d)
+	{
+		actor->getModel()->rotateAboutGlobalZ(-0.3f);
+		Vector look_dir = actor->getLookDirection();
+		actor->moveRelative(look_dir * 1.5f);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(-0.3f);
+	}
+
+	if (key.keysym.sym == SDLK_g) {
+		std::string missile(ManagerEnvironmentConfiguration::getSMM() + "/models/rocket/missle/missiles.obj");
+		WOPhysicX* missileWO = WOPhysicX::New(missile, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+		//missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 3));
+		missileWO->setPosition(Vector(40, 15, 3));
+		missileWO->setLabel("Missile");
+		worldLst->push_back(missileWO);
+		actorLst->push_back(missileWO);
+		missileWO->setEngine(this->physEngine);
+		physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, 90.0f));
 		this->physEngine->addToScene(da);
 	}
 
-	if (key.keysym.sym == SDLK_s) {
-		this->physEngine->shutdown();
-	}
+	//if (this->client->isTCPSocketOpen()) {
+		//this->client->sendNetMsgSynchronousTCP(*this->nmc);
+	//}
 }
 
 
@@ -274,7 +328,23 @@ void Aftr::GLViewNewModule::loadMap()
 	wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
 	worldLst->push_back(wo);
 
-	//physx::PxRigidStatic* sa = this->physEngine->createPlane(wo);
+	WOPhysicX* wheeledCarWO = WOPhysicX::New(wheeledCar, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+	wheeledCarWO->setPosition(Vector(40.f, 15.f, 0.f));
+	wheeledCarWO->setLabel("WheeledCar");
+	worldLst->push_back(wheeledCarWO);
+	actorLst->push_back(wheeledCarWO);
+	physx::PxRigidDynamic* wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO);
+	this->physEngine->addToScene(wheeledCarActor);
+
+	WOPhysicX* cubeWO = WOPhysicX::New(shinyRedPlasticCube, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+	cubeWO->setPosition(Vector(40, 15, 100));
+	cubeWO->setLabel("Cube");
+	worldLst->push_back(cubeWO);
+	actorLst->push_back(cubeWO);
+	physx::PxRigidDynamic* planeActor = this->physEngine->createDynamicPlane(cubeWO);
+	this->physEngine->addToScene(planeActor);
+
+	//physx::PxRigidStatic* sa = this->physEngine->createStatic(cubeWO);
 	//this->physEngine->addToScene(sa);
 
 	createNewModuleWayPoints();
