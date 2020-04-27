@@ -42,18 +42,6 @@
 using namespace Aftr;
 using namespace std;
 
-struct FilterGroup
-{
-	enum Enum
-	{
-		eSUBMARINE = (1 << 0),
-		eMINE_HEAD = (1 << 1),
-		eMINE_LINK = (1 << 2),
-		eCRAB = (1 << 3),
-		eHEIGHTFIELD = (1 << 4),
-	};
-};
-
 GLViewNewModule* GLViewNewModule::New(const std::vector< std::string >& args)
 {
 	GLViewNewModule* glv = new GLViewNewModule(args);
@@ -122,9 +110,9 @@ void GLViewNewModule::onCreate()
 	}
 
 	//Set background music with 2D Sound when starting the program.
-	//this->smgr = SoundManager::init();
-	//this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
-	//this->smgr->getSound2D().at(0)->setVolume(0.5f);
+	this->smgr = SoundManager::init();
+	this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
+	this->smgr->getSound2D().at(0)->setVolume(0.5f);
 
 	this->triangleMesh->createGrid();
 }
@@ -217,79 +205,25 @@ void GLViewNewModule::onMouseMove(const SDL_MouseMotionEvent& e)
 void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 {
 	GLView::onKeyDown(key);
-	actor = actorLst->at(0);
-	//actor->getLabel()
-	//NetMsgCreate* nmc = new NetMsgCreate();
-	this->nmc->setCamPos(cam->getPosition());
-	this->nmc->setCamLookDir(cam->getLookDirection());
+	if (key.keysym.sym == SDLK_0)
+		this->setNumPhysicsStepsPerRender(1);
 
-	//if (key.keysym.sym == SDLK_1)
-	//{
-	//	std::string shinyRedPlasticCube(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl");
-	//	WOPhysicX* cubeWO = WOPhysicX::New(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl", Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	//	cubeWO->setPosition(Vector(100, 200, 20));
-	//	cubeWO->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
-	//	worldLst->push_back(cubeWO);
-	//	actorLst->push_back(cubeWO);
-	//	cubeWO->setEngine(this->physEngine);
-	//	physx::PxRigidDynamic* da = this->physEngine->createDynamic(cubeWO);
-	//	this->physEngine->addToScene(da);
-	//}
+	if (key.keysym.sym == SDLK_1)
+	{
+		std::string shinyRedPlasticCube(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl");
+		WOPhysicX* cubeWO = WOPhysicX::New(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl", Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+		cubeWO->setPosition(Vector(100, 200, 20));
+		cubeWO->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
+		worldLst->push_back(cubeWO);
+		actorLst->push_back(cubeWO);
+		cubeWO->setEngine(this->physEngine);
+		physx::PxRigidDynamic* da = this->physEngine->createDynamic(cubeWO);
+		this->physEngine->addToScene(da);
+	}
 
-	if (key.keysym.sym == SDLK_q) {
+	if (key.keysym.sym == SDLK_s) {
 		this->physEngine->shutdown();
 	}
-	// down
-	if (key.keysym.sym == SDLK_s)
-	{
-		Vector look_dir = actor->getLookDirection();
-		actor->moveRelative(look_dir * -1);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(0.0f);
-	}
-	// up
-	if (key.keysym.sym == SDLK_w)
-	{
-		Vector look_dir = actor->getLookDirection();
-		actor->moveRelative(look_dir);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(0.0f);
-	}
-	// left
-	if (key.keysym.sym == SDLK_a)
-	{
-		actor->getModel()->rotateAboutGlobalZ(0.3f);
-		Vector look_dir = actor->getLookDirection();
-		actor->moveRelative(look_dir * 1.5f);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(0.3f);
-	}
-	// right
-	if (key.keysym.sym == SDLK_d)
-	{
-		actor->getModel()->rotateAboutGlobalZ(-0.3f);
-		Vector look_dir = actor->getLookDirection();
-		actor->moveRelative(look_dir * 1.5f);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(-0.3f);
-	}
-
-	if (key.keysym.sym == SDLK_g) {
-		std::string missile(ManagerEnvironmentConfiguration::getSMM() + "/models/rocket/missle/missiles.obj");
-		WOPhysicX* missileWO = WOPhysicX::New(missile, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-		missileWO->setPosition(Vector(40, 15, 0));
-		missileWO->setLabel("Missile");
-		worldLst->push_back(missileWO);
-		actorLst->push_back(missileWO);
-		missileWO->setEngine(this->physEngine);
-		physx::PxRigidDynamic* da = this->physEngine->createDynamic(missileWO);
-		this->physEngine->addToScene(da);
-		this->physEngine->setupFiltering(da, FilterGroup::eHEIGHTFIELD, FilterGroup::eCRAB);
-	}
-
-	//if (this->client->isTCPSocketOpen()) {
-		//this->client->sendNetMsgSynchronousTCP(*this->nmc);
-	//}
 }
 
 
@@ -340,22 +274,8 @@ void Aftr::GLViewNewModule::loadMap()
 	wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
 	worldLst->push_back(wo);
 
-	WOPhysicX* wheeledCarWO = WOPhysicX::New(wheeledCar, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	wheeledCarWO->setPosition(Vector(40, 15, 0));
-	wheeledCarWO->setLabel("WheeledCar");
-	worldLst->push_back(wheeledCarWO);
-	actorLst->push_back(wheeledCarWO);
-
-	WOPhysicX* cubeWO = WOPhysicX::New(shinyRedPlasticCube, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	cubeWO->setPosition(Vector(40, 15, 100));
-	cubeWO->setLabel("Cube");
-	worldLst->push_back(cubeWO);
-	actorLst->push_back(cubeWO);
-
-	// setup collision filter
-	physx::PxRigidStatic* sa = this->physEngine->createPlane(cubeWO);
-	this->physEngine->addToScene(sa);
-	this->physEngine->setupFiltering(sa, FilterGroup::eHEIGHTFIELD, FilterGroup::eCRAB);
+	//physx::PxRigidStatic* sa = this->physEngine->createPlane(wo);
+	//this->physEngine->addToScene(sa);
 
 	createNewModuleWayPoints();
 }

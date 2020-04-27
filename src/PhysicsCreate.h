@@ -11,7 +11,6 @@ namespace Aftr {
 		PhysicsCreate();
 		void shutdown();
 		void addToScene(physx::PxRigidActor* a);
-		void setupFiltering(physx::PxRigidActor* actor, physx::PxU32 filterGroup, physx::PxU32 filterMask);
 		physx::PxRigidStatic* createPlane(void* data);
 		physx::PxRigidDynamic* createDynamic(WOPhysicX* data);
 

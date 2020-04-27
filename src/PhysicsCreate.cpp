@@ -13,7 +13,7 @@ PhysicsCreate::PhysicsCreate() {
 
 	PxSceneDesc s(this->physics->getTolerancesScale());
 	s.cpuDispatcher = PxDefaultCpuDispatcherCreate(1);
-	s.gravity = PxVec3(0.0f, 0.0f, 9.8f);
+	s.gravity = PxVec3(0.0f, 0.0f, -9.8f);
 	s.filterShader = PxDefaultSimulationFilterShader ;
 	this->scene = this->physics->createScene(s);
 
@@ -78,44 +78,6 @@ PxRigidDynamic* PhysicsCreate::createDynamic(WOPhysicX* data) {
 	actor->userData = data;
 
 	return actor;
-}
-
-PxFilterFlags SampleSubmarineFilterShader(
-	PxFilterObjectAttributes attributes0, PxFilterData filterData0,
-	PxFilterObjectAttributes attributes1, PxFilterData filterData1,
-	PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
-{
-	// let triggers through
-	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
-	{
-		pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
-		return PxFilterFlag::eDEFAULT;
-	}
-	// generate contacts for all that were not filtered above
-	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
-
-	// trigger the contact callback for pairs (A,B) where
-	// the filtermask of A contains the ID of B and vice versa.
-	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
-		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
-
-	return PxFilterFlag::eDEFAULT;
-}
-
-void PhysicsCreate::setupFiltering(PxRigidActor* actor, PxU32 filterGroup, PxU32 filterMask) {
-	PxFilterData filterData;
-	filterData.word0 = filterGroup; // word0 = own ID
-	filterData.word1 = filterMask;  // word1 = ID mask to filter pairs that trigger a
-									// contact callback;
-	const PxU32 numShapes = actor->getNbShapes();
-	PxShape** shapes = (PxShape**)SAMPLE_ALLOC(sizeof(PxShape*) * numShapes);
-	actor->getShapes(shapes, numShapes);
-	for (PxU32 i = 0; i < numShapes; i++)
-	{
-		PxShape* shape = shapes[i];
-		shape->setSimulationFilterData(filterData);
-	}
-	SAMPLE_FREE(shapes);
 }
 
 PxScene* PhysicsCreate::getScene() {
