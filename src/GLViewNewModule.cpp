@@ -79,9 +79,7 @@ GLViewNewModule::GLViewNewModule(const std::vector< std::string >& args) : GLVie
 	physEngine = new PhysicsCreate();
 	cout << "##Creating physic engine##" << endl;
 
-	triangleMesh = WOPhysXTriangularMesh::New();
-	triangleMesh->init(this->physEngine);
-
+	this->nmc = new NetMsgCreate();
 	//this->nmc->setPhysics(this->physEngine);
 	//GLViewNewModule::onCreate() is invoked after this module's LoadMap() is completed.
 
@@ -110,13 +108,10 @@ void GLViewNewModule::onCreate()
 		cout << "Should put the 'Debug' folder under 'NewModule' directly." << endl;
 		return;
 	}
-
 	//Set background music with 2D Sound when starting the program.
 	//this->smgr = SoundManager::init();
 	//this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
 	//this->smgr->getSound2D().at(0)->setVolume(0.5f);
-
-	/*this->triangleMesh->createGrid();*/
 }
 
 
@@ -150,7 +145,9 @@ void GLViewNewModule::updateWorld()
 
 		return;
 	}
-	this->updateHealthLabel();
+	if (actor != nullptr) {
+		this->updateHealthLabel();
+	}
 	//transit
 	float dt = ManagerSDLTime::getTimeSinceLastPhysicsIteration() / 500.f;
 	physx::PxScene* scene = this->physEngine->getScene();
@@ -223,6 +220,67 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 {
 	GLView::onKeyDown(key);
 
+	if (key.keysym.sym == SDLK_1) {
+		std::string wheeledCar(ManagerEnvironmentConfiguration::getSMM() + "/models/rcx_treads.wrl");
+		std::string jet(ManagerEnvironmentConfiguration::getSMM() + "/models/jet_wheels_down_PP.wrl");
+		WOPhysicX* wheeledCarWO = WOPhysicX::New(wheeledCar, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+		wheeledCarWO->setPosition(Vector(40, 15, 5));
+		wheeledCarWO->setLabel("WheeledCar");
+		worldLst->push_back(wheeledCarWO);
+		actorLst->push_back(wheeledCarWO);
+		wheeledCarWO->setEngine(this->physEngine);
+		physx::PxRigidDynamic* wheeledCarActor;
+		if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
+			wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, true);
+			actor = wheeledCarWO;
+		}
+		else {
+			wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, false);
+		}
+		this->physEngine->addToScene(wheeledCarActor);
+		//current health label
+		wcHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
+		wcHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
+		wcHealthStr->getModelT<MGLFTGLString>()->setSize(10, 10);
+		wcHealthStr->getModelT<MGLFTGLString>()->setText("200 / 200");
+		wcHealthStr->rotateAboutGlobalX(PI / 2);
+		wcHealthStr->rotateAboutGlobalZ(-PI / 2);
+		wcHealthStr->setPosition(wheeledCarWO->getPosition().x, wheeledCarWO->getPosition().y, wheeledCarWO->getPosition().z + 5);
+		worldLst->push_back(wcHealthStr);
+
+		WOPhysicX* jetWO = WOPhysicX::New(jet, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+		jetWO->setPosition(Vector(40, 15, 100));
+		jetWO->setLabel("Jet");
+		worldLst->push_back(jetWO);
+		actorLst->push_back(jetWO);
+		jetWO->setEngine(this->physEngine);
+		physx::PxRigidDynamic* planeActor;
+		if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
+			planeActor = this->physEngine->createDynamicPlane(jetWO, false);
+		}
+		else {
+			planeActor = this->physEngine->createDynamicPlane(jetWO, true);
+			actor = jetWO;
+		}
+		this->physEngine->addToScene(planeActor);
+		//current health label
+		jetHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
+		jetHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
+		jetHealthStr->getModelT<MGLFTGLString>()->setSize(10, 10);
+		jetHealthStr->getModelT<MGLFTGLString>()->setText("200 / 200");
+		jetHealthStr->rotateAboutGlobalX(PI / 2);
+		jetHealthStr->rotateAboutGlobalZ(-PI / 2);
+		jetHealthStr->setPosition(jetWO->getPosition().x, jetWO->getPosition().y, jetWO->getPosition().z - 5);
+		worldLst->push_back(jetHealthStr);
+
+		if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
+			actor = wheeledCarWO;
+		}
+		else {
+			actor = jetWO;
+		}
+	}
+
 	if (actor == nullptr) {
 		return;
 	}
@@ -235,6 +293,8 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 	{
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * -1);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(0.0f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else 
@@ -245,6 +305,8 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 	{
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(0.0f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else
@@ -256,6 +318,8 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->getModel()->rotateAboutGlobalZ(0.3f);
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * 1.5f);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(0.3f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else
@@ -267,6 +331,8 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->getModel()->rotateAboutGlobalZ(-0.3f);
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * 1.5f);
+		this->nmc->setObjPos(actor->getPosition());
+		this->nmc->setRotateZ(-0.3f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else
@@ -277,13 +343,18 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		// upper
 		if (key.keysym.sym == SDLK_e)
 		{
+
 			actor->moveRelative(Vector(0.f, 0.f, 0.1f));
+			this->nmc->setObjPos(actor->getPosition());
+			this->nmc->setRotateZ(0.0f);
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 		}
 		// lower
 		if (key.keysym.sym == SDLK_c)
 		{
 			actor->moveRelative(Vector(0.f, 0.f, -0.1f));
+			this->nmc->setObjPos(actor->getPosition());
+			this->nmc->setRotateZ(0.0f);
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 		}
 	}
@@ -344,8 +415,9 @@ void Aftr::GLViewNewModule::loadMap()
 
 	std::string shinyRedPlasticCube(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl");
 	std::string wheeledCar(ManagerEnvironmentConfiguration::getSMM() + "/models/rcx_treads.wrl");
-	std::string grass(ManagerEnvironmentConfiguration::getSMM() + "/models/grassFloor400x400_pp.wrl");
 	std::string jet(ManagerEnvironmentConfiguration::getSMM() + "/models/jet_wheels_down_PP.wrl");
+	std::string grass(ManagerEnvironmentConfiguration::getSMM() + "/models/grassFloor400x400_pp.wrl");
+
 
 	//SkyBox Textures readily available
 	std::vector< std::string > skyBoxImageNames; //vector to store texture paths
@@ -383,63 +455,6 @@ void Aftr::GLViewNewModule::loadMap()
 	worldLst->push_back(wo);
 	physx::PxRigidStatic* sa = this->physEngine->createPlane(wo);
 	this->physEngine->addToScene(sa);
-
-	WOPhysicX* wheeledCarWO = WOPhysicX::New(wheeledCar, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	wheeledCarWO->setPosition(Vector(40, 15, 5));
-	wheeledCarWO->setLabel("WheeledCar");
-	worldLst->push_back(wheeledCarWO);
-	actorLst->push_back(wheeledCarWO);
-	wheeledCarWO->setEngine(this->physEngine);
-	physx::PxRigidDynamic* wheeledCarActor;
-	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
-		wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, true);
-		actor = wheeledCarWO;
-	}
-	else {
-		wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, false);
-	}
-	this->physEngine->addToScene(wheeledCarActor);
-	//current health label
-	wcHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
-	wcHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
-	wcHealthStr->getModelT<MGLFTGLString>()->setSize(10, 10);
-	wcHealthStr->getModelT<MGLFTGLString>()->setText("200 / 200");
-	wcHealthStr->rotateAboutGlobalX(PI / 2);
-	wcHealthStr->rotateAboutGlobalZ(-PI / 2);
-	wcHealthStr->setPosition(wheeledCarWO->getPosition().x, wheeledCarWO->getPosition().y, wheeledCarWO->getPosition().z + 5);
-	worldLst->push_back(wcHealthStr);
-
-	WOPhysicX* jetWO = WOPhysicX::New(jet, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	jetWO->setPosition(Vector(40, 15, 100));
-	jetWO->setLabel("Jet");
-	worldLst->push_back(jetWO);
-	actorLst->push_back(jetWO);
-	jetWO->setEngine(this->physEngine);
-	physx::PxRigidDynamic* planeActor;
-	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
-		planeActor = this->physEngine->createDynamicPlane(jetWO, false);
-	}
-	else {
-		planeActor = this->physEngine->createDynamicPlane(jetWO, true);
-		actor = jetWO;
-	}
-	this->physEngine->addToScene(planeActor);
-	//current health label
-	jetHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
-	jetHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
-	jetHealthStr->getModelT<MGLFTGLString>()->setSize(10, 10);
-	jetHealthStr->getModelT<MGLFTGLString>()->setText("200 / 200");
-	jetHealthStr->rotateAboutGlobalX(PI / 2);
-	jetHealthStr->rotateAboutGlobalZ(-PI / 2);
-	jetHealthStr->setPosition(jetWO->getPosition().x, jetWO->getPosition().y, jetWO->getPosition().z - 5);
-	worldLst->push_back(jetHealthStr);
-
-	//if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
-	//	actor = wheeledCarWO;
-	//}
-	//else {
-	//	actor = jetWO;
-	//}
 
 	createNewModuleWayPoints();
 }

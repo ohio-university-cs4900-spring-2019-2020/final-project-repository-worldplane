@@ -4,9 +4,8 @@
 #include "NetMessengerClient.h"
 #include "SoundManager.h"
 #include "irrKlang.h"
-#include "NetMsgSimpleWO.h"
+#include "NetMsgCreate.h"
 #include "WOPhysicX.h"
-#include "WOPhysXTriangularMesh.h"
 #include "WOFTGLString.h"
 
 namespace Aftr
@@ -47,9 +46,8 @@ protected:
 
    SoundManager* smgr;
    NetMessengerClient* client;
-   NetMsgSimpleWO* nmc;
+   NetMsgCreate* nmc;
    PhysicsCreate* physEngine;
-   WOPhysXTriangularMesh* triangleMesh;
    WOFTGLString* wcHealthStr;
    WOFTGLString* jetHealthStr;
    WOFTGLString* ggStr = nullptr;
