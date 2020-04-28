@@ -212,10 +212,9 @@ void PhysicsCreate::hitten() {
 			std::vector<PxRigidDynamic*>::iterator missileIter = std::find(
 				this->missileActors.begin(), this->missileActors.end(), currentExplode);
 			//remove missile
-			if (missileIter != this->missileActors.end()) {
+			if (missileIter != this->missileActors.end())
 				this->missileActors.erase(missileIter);
-				explodeMissileActors.erase(missileIter);
-			}
+			explodeMissileActors.erase(explodeMissileActors.begin() + i);
 			//currentExplode->release();			
 
 			// damage to target
@@ -269,12 +268,11 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 				//PxTransform trans = PxTransform(PxVec3(data->getPosition().x, data->getPosition().y, data->getPosition().z));
 				//PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
 				//PxRigidDynamic* missile = PxCreateDynamic(*this->physics, trans, *shape, 10.0f);
-				PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor->userData);
-
+				PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor);
 				// insert only once
 				if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
 					this->explodeMissileActors.push_back(missile);
-
+				explodeMissileActors[0]->getGlobalPose().p;
 				break;
 			}
 		}
