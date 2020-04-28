@@ -82,7 +82,6 @@ GLViewNewModule::GLViewNewModule(const std::vector< std::string >& args) : GLVie
 	triangleMesh = WOPhysXTriangularMesh::New();
 	triangleMesh->init(this->physEngine);
 
-	this->nmc = new NetMsgCreate();
 	//this->nmc->setPhysics(this->physEngine);
 	//GLViewNewModule::onCreate() is invoked after this module's LoadMap() is completed.
 
@@ -236,8 +235,6 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 	{
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * -1);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(0.0f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else 
@@ -248,8 +245,6 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 	{
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(0.0f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else
@@ -261,8 +256,6 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->getModel()->rotateAboutGlobalZ(0.3f);
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * 1.5f);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(0.3f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else
@@ -274,8 +267,6 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->getModel()->rotateAboutGlobalZ(-0.3f);
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * 1.5f);
-		this->nmc->setObjPos(actor->getPosition());
-		this->nmc->setRotateZ(-0.3f);
 		if (actor->getLabel() == "WheeledCar")
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
 		else
@@ -286,18 +277,13 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		// upper
 		if (key.keysym.sym == SDLK_e)
 		{
-
 			actor->moveRelative(Vector(0.f, 0.f, 0.1f));
-			this->nmc->setObjPos(actor->getPosition());
-			this->nmc->setRotateZ(0.0f);
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 		}
 		// lower
 		if (key.keysym.sym == SDLK_c)
 		{
 			actor->moveRelative(Vector(0.f, 0.f, -0.1f));
-			this->nmc->setObjPos(actor->getPosition());
-			this->nmc->setRotateZ(0.0f);
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 		}
 	}

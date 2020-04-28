@@ -4,7 +4,7 @@
 #include "NetMessengerClient.h"
 #include "SoundManager.h"
 #include "irrKlang.h"
-#include "NetMsgCreate.h"
+#include "NetMsgSimpleWO.h"
 #include "WOPhysicX.h"
 #include "WOPhysXTriangularMesh.h"
 #include "WOFTGLString.h"
@@ -47,7 +47,7 @@ protected:
 
    SoundManager* smgr;
    NetMessengerClient* client;
-   NetMsgCreate* nmc;
+   NetMsgSimpleWO* nmc;
    PhysicsCreate* physEngine;
    WOPhysXTriangularMesh* triangleMesh;
    WOFTGLString* wcHealthStr;
