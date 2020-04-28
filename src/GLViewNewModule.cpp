@@ -115,7 +115,7 @@ void GLViewNewModule::onCreate()
 	//this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
 	//this->smgr->getSound2D().at(0)->setVolume(0.5f);
 
-	this->triangleMesh->createGrid();
+	/*this->triangleMesh->createGrid();*/
 }
 
 
@@ -251,14 +251,24 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 	if (key.keysym.sym == SDLK_g) {
 		std::string missile(ManagerEnvironmentConfiguration::getSMM() + "/models/rocket/missle/missiles.obj");
 		WOPhysicX* missileWO = WOPhysicX::New(missile, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-		missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 3));
-		//missileWO->setPosition(Vector(40, 15, 3));
-		missileWO->setLabel("Missile");
-		worldLst->push_back(missileWO);
-		actorLst->push_back(missileWO);
-		missileWO->setEngine(this->physEngine);
-		physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, 90.0f));
-		this->physEngine->addToScene(da);
+		if (actor->getLabel() == "WheeledCar") {
+			missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5));
+			missileWO->setLabel("Missile");
+			worldLst->push_back(missileWO);
+			actorLst->push_back(missileWO);
+			missileWO->setEngine(this->physEngine);
+			physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, 90.0f));
+			this->physEngine->addToScene(da);
+		}
+		else {
+			missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5));
+			missileWO->setLabel("Missile");
+			worldLst->push_back(missileWO);
+			actorLst->push_back(missileWO);
+			missileWO->setEngine(this->physEngine);
+			physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, -5.0f));
+			this->physEngine->addToScene(da);
+		}
 	}
 
 	//if (this->client->isTCPSocketOpen()) {
@@ -319,25 +329,35 @@ void Aftr::GLViewNewModule::loadMap()
 	wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
 	worldLst->push_back(wo);
 
+	//Create grass
+	wo = WO::New(grass, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+	wo->setPosition(Vector(0, 0, 0));
+	wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
+	ModelMeshSkin& grassSkin = wo->getModel()->getModelDataShared()->getModelMeshes().at(0)->getSkins().at(0);
+	grassSkin.getMultiTextureSet().at(0)->setTextureRepeats(5.0f);
+	grassSkin.setAmbient(aftrColor4f(0.4f, 0.4f, 0.4f, 1.0f)); //Color of object when it is not in any light
+	grassSkin.setDiffuse(aftrColor4f(1.0f, 1.0f, 1.0f, 1.0f)); //Diffuse color components (ie, matte shading color of this object)
+	grassSkin.setSpecular(aftrColor4f(0.4f, 0.4f, 0.4f, 1.0f)); //Specular color component (ie, how "shiney" it is)
+	grassSkin.setSpecularCoefficient(10); // How "sharp" are the specular highlights (bigger is sharper, 1000 is very sharp, 10 is very dull)
+	wo->setLabel("Grass");
+	worldLst->push_back(wo);
+	physx::PxRigidStatic* sa = this->physEngine->createPlane(wo);
+	this->physEngine->addToScene(sa);
+
 	WOPhysicX* wheeledCarWO = WOPhysicX::New(wheeledCar, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	WO* grid = nullptr;
-	for (int i = 0; i < worldLst->size(); i++) {
-		if (worldLst->at(i)->getLabel() == "grid") {
-			grid = worldLst->at(i);
-			break;
-		}
-	}
-	if (grid != nullptr) {
-		wheeledCarWO->setPosition(Vector(40.f, 15.f, grid->getPosition().z));
-	}
-	else {
-		wheeledCarWO->setPosition(Vector(40.f, 15.f, 0.f));
-	}
+	wheeledCarWO->setPosition(Vector(40, 15, 5));
 	wheeledCarWO->setLabel("WheeledCar");
 	worldLst->push_back(wheeledCarWO);
 	actorLst->push_back(wheeledCarWO);
 	wheeledCarWO->setEngine(this->physEngine);
-	physx::PxRigidDynamic* wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO);
+	physx::PxRigidDynamic* wheeledCarActor;
+	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
+		wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, true);
+		actor = wheeledCarWO;
+	}
+	else {
+		wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, false);
+	}
 	this->physEngine->addToScene(wheeledCarActor);
 
 	WOPhysicX* jetWO = WOPhysicX::New(jet, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
@@ -346,15 +366,22 @@ void Aftr::GLViewNewModule::loadMap()
 	worldLst->push_back(jetWO);
 	actorLst->push_back(jetWO);
 	jetWO->setEngine(this->physEngine);
-	physx::PxRigidDynamic* planeActor = this->physEngine->createDynamicPlane(jetWO);
-	this->physEngine->addToScene(planeActor);
-
+	physx::PxRigidDynamic* planeActor;
 	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
-		actor = wheeledCarWO;
+		planeActor = this->physEngine->createDynamicPlane(jetWO, false);
 	}
 	else {
+		planeActor = this->physEngine->createDynamicPlane(jetWO, true);
 		actor = jetWO;
 	}
+	this->physEngine->addToScene(planeActor);
+
+	//if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
+	//	actor = wheeledCarWO;
+	//}
+	//else {
+	//	actor = jetWO;
+	//}
 
 	createNewModuleWayPoints();
 }

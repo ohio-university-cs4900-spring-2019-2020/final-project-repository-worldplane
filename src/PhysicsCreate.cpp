@@ -10,9 +10,7 @@ using namespace physx;
 using namespace std;
 
 
-static PxRigidDynamic* gTreasureActor = NULL;
-static bool	gTreasureFound = false;
-static PxI32 planeHealth = 200;
+static PxI32 targetHealth = 200;
 
 struct FilterGroup
 {
@@ -77,6 +75,8 @@ PhysicsCreate::PhysicsCreate() {
 	this->material = this->physics->createMaterial(0.f, 0.f, 0.f);
 	this->planeActor = nullptr;
 	this->wheeledCarActor = nullptr;
+	this->mActor = nullptr;
+	this->tActor = nullptr;
 
 	PxSceneDesc s(this->physics->getTolerancesScale());
 	s.cpuDispatcher = PxDefaultCpuDispatcherCreate(1);
@@ -163,15 +163,21 @@ PxRigidStatic* PhysicsCreate::createStatic(WOPhysicX* data) {
 	return actor;
 }
 
-PxRigidDynamic* PhysicsCreate::createWheeledCar(WOPhysicX* data) {
+PxRigidDynamic* PhysicsCreate::createWheeledCar(WOPhysicX* data, bool isMActor) {
 	PxTransform trans = PxTransform(PxVec3(data->getPosition().x, data->getPosition().y, data->getPosition().z));
 	PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
 	this->wheeledCarActor = PxCreateDynamic(*this->physics, trans, *shape, 10.0f);
 	this->wheeledCarActor->userData = data;
 	this->wheeledCarActor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, true);
 
-	//PxRigidBodyExt::updateMassAndInertia(*actor);
 	setupFiltering(this->wheeledCarActor, FilterGroup::eSUBMARINE, FilterGroup::eMINE_HEAD | FilterGroup::eMINE_LINK);
+
+	if (isMActor) {
+		this->mActor = this->wheeledCarActor;
+	}
+	else {
+		this->tActor = this->wheeledCarActor;
+	}
 
 	return this->wheeledCarActor;
 }
@@ -192,7 +198,7 @@ PxRigidDynamic* PhysicsCreate::createDynamicMissile(WOPhysicX* data, PxVec3 velo
 	return actor;
 }
 
-PxRigidDynamic* PhysicsCreate::createDynamicPlane(WOPhysicX* data) {
+PxRigidDynamic* PhysicsCreate::createDynamicPlane(WOPhysicX* data, bool isMActor) {
 	PxTransform trans = PxTransform(PxVec3(data->getPosition().x, data->getPosition().y, data->getPosition().z));
 	PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
 	this->planeActor = PxCreateDynamic(*this->physics, trans, *shape, 10.0f);
@@ -201,13 +207,19 @@ PxRigidDynamic* PhysicsCreate::createDynamicPlane(WOPhysicX* data) {
 
 	setupFiltering(this->planeActor, FilterGroup::eSUBMARINE, FilterGroup::eMINE_HEAD | FilterGroup::eMINE_LINK);
 
+	if (isMActor) {
+		this->mActor = this->planeActor;
+	}
+	else {
+		this->tActor = this->planeActor;
+	}
+
 	return this->planeActor;
 }
 
 void PhysicsCreate::hitten() {
-	cout << "****************************" << endl;
 	cout << "!!!!Entering HITTEN()!!!!!!" << endl;
-	if (this->planeActor) {
+	if (this->tActor) {
 		const size_t nExplodeMissiles = this->explodeMissileActors.size();
 
 		for (PxU32 i = 0; i < nExplodeMissiles; i++) {
@@ -227,39 +239,41 @@ void PhysicsCreate::hitten() {
 			}
 			explodeMissileActors.erase(explodeMissileActors.begin() + i);
 			//currentExplode->release();			
-
-			// damage to target
+			
+			//damage to target
 			static const PxReal strength = 100.0f;
-			PxVec3 explosion = this->planeActor->getGlobalPose().p - explosionPos;
+			PxVec3 explosion = this->tActor->getGlobalPose().p - explosionPos;
 			PxReal len = explosion.normalize();
 			PxReal damage = strength * (1.0f / len);
 			explosion *= damage;
-			planeHealth = PxMax(planeHealth - PxI32(damage), 0);
-			if (planeHealth <= 0)
+			targetHealth = PxMax(targetHealth - PxI32(damage), 0);
+
+			if (targetHealth <= 0) //GAME OVER
 			{
-				PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
-				//TODO: GAME OVER
-				PxTransform pose = PxShapeExt::getGlobalPose(*shape, *this->planeActor);
-				PxGeometryHolder geom = shape->getGeometry();
+				this->shutdown();
+				//PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
+				////TODO: GAME OVER
+				//PxTransform pose = PxShapeExt::getGlobalPose(*shape, *this->tActor);
+				//PxGeometryHolder geom = shape->getGeometry();
 
-				// create new actor from shape (to split compound)
-				PxRigidDynamic* newActor = this->physics->createRigidDynamic(pose);
+				//// create new actor from shape (to split compound)
+				//PxRigidDynamic* newActor = this->physics->createRigidDynamic(pose);
 
-				PxShape* newShape = PxRigidActorExt::createExclusiveShape(*newActor, geom.any(), *this->material);
+				//PxShape* newShape = PxRigidActorExt::createExclusiveShape(*newActor, geom.any(), *this->material);
 
-				newActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
-				newActor->setLinearDamping(10.5f);
-				newActor->setAngularDamping(0.5f);
-				PxRigidBodyExt::updateMassAndInertia(*newActor, 1.0f);
-				this->scene->addActor(*newActor);
+				//newActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+				//newActor->setLinearDamping(10.5f);
+				//newActor->setAngularDamping(0.5f);
+				//PxRigidBodyExt::updateMassAndInertia(*newActor, 1.0f);
+				//this->scene->addActor(*newActor);
 
-				PxVec3 newExplosion = pose.p - this->planeActor->getGlobalPose().p;
-				PxReal newLen = newExplosion.normalize();
-				newExplosion *= (damage / newLen);
-				newActor->setLinearVelocity(newExplosion);
-				newActor->setAngularVelocity(PxVec3(1, 2, 3));
+				//PxVec3 newExplosion = pose.p - this->tActor->getGlobalPose().p;
+				//PxReal newLen = newExplosion.normalize();
+				//newExplosion *= (damage / newLen);
+				//newActor->setLinearVelocity(newExplosion);
+				//newActor->setAngularVelocity(PxVec3(1, 2, 3));
 
-				this->scene->removeActor(*this->planeActor);
+				//this->scene->removeActor(*this->tActor);
 				break;
 			}
 		}
@@ -273,9 +287,9 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 
 		if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
 		{
-			if ((pairHeader.actors[0] == this->planeActor) || (pairHeader.actors[1] == this->planeActor))
+			if ((pairHeader.actors[0] == this->tActor) || (pairHeader.actors[1] == this->tActor))
 			{
-				PxActor* otherActor = (this->planeActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
+				PxActor* otherActor = (this->tActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
 				//PxTransform trans = PxTransform(PxVec3(data->getPosition().x, data->getPosition().y, data->getPosition().z));
 				//PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
 				//PxRigidDynamic* missile = PxCreateDynamic(*this->physics, trans, *shape, 10.0f);
@@ -287,28 +301,13 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 				break;
 			}
 		}
-	}
 
-	while (nbPairs--)
-	{
 		const PxContactPair& current = *pairs++;
-
-		// The reported pairs can be trigger pairs or not. We only enabled contact reports for
-		// trigger pairs in the filter shader, so we don't need to do further checks here. In a
-		// real-world scenario you would probably need a way to tell whether one of the shapes
-		// is a trigger or not. You could e.g. reuse the PxFilterData like we did in the filter
-		// shader, or maybe use the shape's userData to identify triggers, or maybe put triggers
-		// in a hash-set and test the reported shape pointers against it. Many options here.
-
-		cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
 		if (current.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
 			printf("Shape is entering trigger volume\n");
 		if (current.events & PxPairFlag::eNOTIFY_TOUCH_LOST)
 			printf("Shape is leaving trigger volume\n");
-
-		cout << current.shapes[0] << endl;
 	}
-
 
 	this->hitten();
 }

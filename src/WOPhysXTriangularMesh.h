@@ -18,8 +18,8 @@ namespace Aftr {
 		WOMacroDeclaration(WOPhysXTriangularMesh, WOGridECEFElevation);
 		static WOPhysXTriangularMesh* New();
 		//WOPhysXTriangularMesh(PhysicsCreate* p);
-		void onCreate(WO* wo);
-		void createGrid();
+		physx::PxRigidStatic* onCreate(WO* wo);
+		physx::PxRigidStatic* createGrid();
 		void init(PhysicsCreate* p);
 
 	protected:

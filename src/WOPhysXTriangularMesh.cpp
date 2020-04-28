@@ -36,7 +36,7 @@ void WOPhysXTriangularMesh::init(PhysicsCreate* p) {
 	this->physics = p->getPhysics();
 }
 
-void WOPhysXTriangularMesh::onCreate(WO* wo)
+PxRigidStatic* WOPhysXTriangularMesh::onCreate(WO* wo)
 {
 	//make copy of vertex list and index list
 	size_t vertexListSize = wo->getModel()->getModelDataShared()->getCompositeVertexList().size();
@@ -74,7 +74,7 @@ void WOPhysXTriangularMesh::onCreate(WO* wo)
 	PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
 	PxTriangleMesh* mesh = this->physics->createTriangleMesh(readBuffer);
 
-	PxMaterial* gMaterial = this->physics->createMaterial(0.5f, 0.5f, 0.6f);
+	PxMaterial* gMaterial = this->physics->createMaterial(0.1f, 0.1f, 0.1f);
 	PxShape* shape = this->physics->createShape(PxTriangleMeshGeometry(mesh), *gMaterial, true);
 	PxTransform t({ 0,0,0 });
 
@@ -93,9 +93,11 @@ void WOPhysXTriangularMesh::onCreate(WO* wo)
 
 	a->userData = wo;
 	this->physEngine->addToScene(a);
+
+	return a;
 }
 
-void WOPhysXTriangularMesh::createGrid() {
+PxRigidStatic* WOPhysXTriangularMesh::createGrid() {
 	float top = 34.2072593790098f;
 	float bottom = 33.9980272592999f;
 
@@ -148,5 +150,5 @@ void WOPhysXTriangularMesh::createGrid() {
 	//}
 	grid->getModel()->isUsingBlending(false);
 
-	this->onCreate(grid);
+	return this->onCreate(grid);
 }
