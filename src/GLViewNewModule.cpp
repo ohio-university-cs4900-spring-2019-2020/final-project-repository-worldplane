@@ -66,13 +66,13 @@ GLViewNewModule::GLViewNewModule(const std::vector< std::string >& args) : GLVie
 	//       calls GLView::loadMap() (as well as initializing the engine's Managers)
 	//    calls GLView::onCreate()
 
-	//if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
-	//	this->client = NetMessengerClient::New("127.0.0.1", "12682");
-	//	cout << "This is client A..." << endl;
-	//}
-	//else {
-   // this->client = NetMessengerClient::New("127.0.0.1", "2683");
-   // cout << "This is client B..." << endl;
+//	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
+//		this->client = NetMessengerClient::New("127.0.0.1", "12682");
+//		cout << "This is client A..." << endl;
+//	}
+//	else {
+//    this->client = NetMessengerClient::New("127.0.0.1", "12683");
+//    cout << "This is client B..." << endl;
 //}
 	physEngine = new PhysicsCreate();
 	cout << "##Creating physic engine##" << endl;
@@ -81,6 +81,7 @@ GLViewNewModule::GLViewNewModule(const std::vector< std::string >& args) : GLVie
 	triangleMesh->init(this->physEngine);
 
 	this->nmc = new NetMsgCreate();
+	//this->nmc->setPhysics(this->physEngine);
 	//GLViewNewModule::onCreate() is invoked after this module's LoadMap() is completed.
 
 
@@ -148,15 +149,12 @@ void GLViewNewModule::updateWorld()
 
 		// Network
 		//if (this->client->isTCPSocketOpen()) {
-		//	this->nmc->setCamPos(cam->getPosition());
-		//	this->nmc->setCamLookDir(cam->getLookDirection());
 		//	this->nmc->setObjPos(wo->getPosition());
 		//	this->nmc->setRotateZ(0.0f);
 		//	this->nmc->setActorIndex(actorLst->getIndexOfWO(wo));
 		//	this->nmc->setModelPath("");
 		//	this->nmc->setDisplayMatrix(matrix);
-		//	this->nmc->setMoveCam(false);
-		//	//this->client->sendNetMsgSynchronousTCP(*this->nmc);
+		//	this->client->sendNetMsgSynchronousTCP(*this->nmc);
 		//}
 	}
 }
@@ -171,11 +169,6 @@ void GLViewNewModule::onResizeWindow(GLsizei width, GLsizei height)
 void GLViewNewModule::onMouseDown(const SDL_MouseButtonEvent& e)
 {
 	GLView::onMouseDown(e);
-	this->nmc->setCamPos(cam->getPosition());
-	this->nmc->setCamLookDir(cam->getLookDirection());
-	this->nmc->setMoveCam(true);
-	this->nmc->setModelPath("");
-	//this->client->sendNetMsgSynchronousTCP(*this->nmc);
 
 }
 
@@ -183,51 +176,25 @@ void GLViewNewModule::onMouseDown(const SDL_MouseButtonEvent& e)
 void GLViewNewModule::onMouseUp(const SDL_MouseButtonEvent& e)
 {
 	GLView::onMouseUp(e);
-	this->nmc->setCamPos(cam->getPosition());
-	this->nmc->setCamLookDir(cam->getLookDirection());
-	this->nmc->setMoveCam(true);
-	this->nmc->setModelPath("");
-	//this->client->sendNetMsgSynchronousTCP(*this->nmc);
+
 }
 
 
 void GLViewNewModule::onMouseMove(const SDL_MouseMotionEvent& e)
 {
 	GLView::onMouseMove(e);
-	this->nmc->setCamPos(cam->getPosition());
-	this->nmc->setCamLookDir(cam->getLookDirection());
-	this->nmc->setMoveCam(true);
-	this->nmc->setModelPath("");
-	//this->client->sendNetMsgSynchronousTCP(*this->nmc);
+
 }
 
 
 void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 {
 	GLView::onKeyDown(key);
-	actor = actorLst->at(0);
-	//actor->getLabel()
-	//NetMsgCreate* nmc = new NetMsgCreate();
-	this->nmc->setCamPos(cam->getPosition());
-	this->nmc->setCamLookDir(cam->getLookDirection());
-
-	//if (key.keysym.sym == SDLK_1)
-	//{
-	//	std::string shinyRedPlasticCube(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl");
-	//	WOPhysicX* cubeWO = WOPhysicX::New(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl", Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	//	cubeWO->setPosition(Vector(100, 200, 20));
-	//	cubeWO->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
-	//	worldLst->push_back(cubeWO);
-	//	actorLst->push_back(cubeWO);
-	//	cubeWO->setEngine(this->physEngine);
-	//	physx::PxRigidDynamic* da = this->physEngine->createDynamic(cubeWO);
-	//	this->physEngine->addToScene(da);
-	//}
 
 	if (key.keysym.sym == SDLK_q) {
 		this->physEngine->shutdown();
 	}
-	// down
+	// backward
 	if (key.keysym.sym == SDLK_s)
 	{
 		Vector look_dir = actor->getLookDirection();
@@ -235,7 +202,7 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		this->nmc->setObjPos(actor->getPosition());
 		this->nmc->setRotateZ(0.0f);
 	}
-	// up
+	// forward
 	if (key.keysym.sym == SDLK_w)
 	{
 		Vector look_dir = actor->getLookDirection();
@@ -261,6 +228,25 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		this->nmc->setObjPos(actor->getPosition());
 		this->nmc->setRotateZ(-0.3f);
 	}
+	
+	if (actor->getLabel() == "Jet") {
+		// upper
+		if (key.keysym.sym == SDLK_e)
+		{
+
+			actor->moveRelative(Vector(0.f, 0.f, 0.1f));
+			this->nmc->setObjPos(actor->getPosition());
+			this->nmc->setRotateZ(0.0f);
+
+		}
+		// lower
+		if (key.keysym.sym == SDLK_c)
+		{
+			actor->moveRelative(Vector(0.f, 0.f, -0.1f));
+			this->nmc->setObjPos(actor->getPosition());
+			this->nmc->setRotateZ(0.0f);
+		}
+	}
 
 	if (key.keysym.sym == SDLK_g) {
 		std::string missile(ManagerEnvironmentConfiguration::getSMM() + "/models/rocket/missle/missiles.obj");
@@ -276,7 +262,12 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 	}
 
 	//if (this->client->isTCPSocketOpen()) {
-		//this->client->sendNetMsgSynchronousTCP(*this->nmc);
+	//	this->nmc->setObjPos(actor->getWO()->getPosition());
+	//	this->nmc->setRotateZ(0.0f);
+	//	this->nmc->setActorIndex(actorLst->getIndexOfWO(actor->getWO()));
+	//	this->nmc->setModelPath(ManagerEnvironmentConfiguration::getSMM() + "/models/rcx_treads.wrl");
+	//	this->nmc->setDisplayMatrix(actor->getWO()->getModel()->getDisplayMatrix());
+	//	this->client->sendNetMsgSynchronousTCP(*this->nmc);
 	//}
 }
 
@@ -304,7 +295,7 @@ void Aftr::GLViewNewModule::loadMap()
 	std::string shinyRedPlasticCube(ManagerEnvironmentConfiguration::getSMM() + "/models/cube4x4x4redShinyPlastic_pp.wrl");
 	std::string wheeledCar(ManagerEnvironmentConfiguration::getSMM() + "/models/rcx_treads.wrl");
 	std::string grass(ManagerEnvironmentConfiguration::getSMM() + "/models/grassFloor400x400_pp.wrl");
-	std::string human(ManagerEnvironmentConfiguration::getSMM() + "/models/human_chest.wrl");
+	std::string jet(ManagerEnvironmentConfiguration::getSMM() + "/models/jet_wheels_down_PP.wrl");
 
 	//SkyBox Textures readily available
 	std::vector< std::string > skyBoxImageNames; //vector to store texture paths
@@ -329,23 +320,41 @@ void Aftr::GLViewNewModule::loadMap()
 	worldLst->push_back(wo);
 
 	WOPhysicX* wheeledCarWO = WOPhysicX::New(wheeledCar, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	wheeledCarWO->setPosition(Vector(40.f, 15.f, 0.f));
+	WO* grid = nullptr;
+	for (int i = 0; i < worldLst->size(); i++) {
+		if (worldLst->at(i)->getLabel() == "grid") {
+			grid = worldLst->at(i);
+			break;
+		}
+	}
+	if (grid != nullptr) {
+		wheeledCarWO->setPosition(Vector(40.f, 15.f, grid->getPosition().z));
+	}
+	else {
+		wheeledCarWO->setPosition(Vector(40.f, 15.f, 0.f));
+	}
 	wheeledCarWO->setLabel("WheeledCar");
 	worldLst->push_back(wheeledCarWO);
 	actorLst->push_back(wheeledCarWO);
+	wheeledCarWO->setEngine(this->physEngine);
 	physx::PxRigidDynamic* wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO);
 	this->physEngine->addToScene(wheeledCarActor);
 
-	WOPhysicX* cubeWO = WOPhysicX::New(shinyRedPlasticCube, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-	cubeWO->setPosition(Vector(40, 15, 100));
-	cubeWO->setLabel("Cube");
-	worldLst->push_back(cubeWO);
-	actorLst->push_back(cubeWO);
-	physx::PxRigidDynamic* planeActor = this->physEngine->createDynamicPlane(cubeWO);
+	WOPhysicX* jetWO = WOPhysicX::New(jet, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+	jetWO->setPosition(Vector(40, 15, 100));
+	jetWO->setLabel("Jet");
+	worldLst->push_back(jetWO);
+	actorLst->push_back(jetWO);
+	jetWO->setEngine(this->physEngine);
+	physx::PxRigidDynamic* planeActor = this->physEngine->createDynamicPlane(jetWO);
 	this->physEngine->addToScene(planeActor);
 
-	//physx::PxRigidStatic* sa = this->physEngine->createStatic(cubeWO);
-	//this->physEngine->addToScene(sa);
+	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
+		actor = wheeledCarWO;
+	}
+	else {
+		actor = jetWO;
+	}
 
 	createNewModuleWayPoints();
 }
