@@ -131,7 +131,6 @@ GLViewFinalClient::~GLViewFinalClient()
 	//Implicitly calls GLView::~GLView()
 }
 
-
 void GLViewFinalClient::updateWorld()
 {
 	GLView::updateWorld(); //Just call the parent's update world first.
@@ -156,13 +155,36 @@ void GLViewFinalClient::updateWorld()
 
 		return;
 	}
-	this->updateHealthLabel();
+	if (actor != nullptr) {
+		this->updateHealthLabel();
+	}
 	//transit
 	float dt = ManagerSDLTime::getTimeSinceLastPhysicsIteration() / 500.f;
 	physx::PxScene* scene = this->physEngine->getScene();
 	scene->simulate(dt);
 	scene->fetchResults(true);
 
+	physx::PxU32 numAAs = 0;
+	physx::PxActor** aas = scene->getActiveActors(numAAs);
+
+	//poses that have changed since the last update
+	for (physx::PxU32 i = 0; i < numAAs; i++)
+	{
+		physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(aas[i]);
+		physx::PxTransform trans = actor->getGlobalPose();
+		WOPhysicX* wo = static_cast<WOPhysicX*>(aas[i]->userData);
+		Mat4 matrix = wo->onCreateNVPhysXActor(&trans);
+
+		// Network
+		//if (this->client->isTCPSocketOpen()) {
+		//	this->nmc->setObjPos(wo->getPosition());
+		//	this->nmc->setRotateZ(0.0f);
+		//	this->nmc->setActorIndex(actorLst->getIndexOfWO(wo));
+		//	this->nmc->setModelPath("");
+		//	this->nmc->setDisplayMatrix(matrix);
+		//	this->client->sendNetMsgSynchronousTCP(*this->nmc);
+		//}
+	}
 }
 
 void GLViewFinalClient::updateHealthLabel() {
@@ -220,20 +242,62 @@ void GLViewFinalClient::onKeyDown(const SDL_KeyboardEvent& key)
 	{
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * -1);
-		if (actor->getLabel() == "WheeledCar")
+
+		NetMsgSimpleWO msg;
+		msg.pos = actor->getPosition();
+		msg.dma = actor->getModel()->getDisplayMatrix();
+		msg.id = this->actorLst->getIndexOfWO(actor);
+		msg.new_indicator = 0;
+		client->sendNetMsgSynchronousTCP(msg);
+
+		if (actor->getLabel() == "WheeledCar") {
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
-		else 
+			NetMsgSimpleWO msg;
+			msg.pos = this->wcHealthStr->getPosition();
+			msg.dma = this->wcHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->wcHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
+		else {
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+			NetMsgSimpleWO msg;
+			msg.pos = this->jetHealthStr->getPosition();
+			msg.dma = this->jetHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->jetHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
 	}
 	// forward
 	if (key.keysym.sym == SDLK_w)
 	{
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir);
-		if (actor->getLabel() == "WheeledCar")
+		NetMsgSimpleWO msg;
+		msg.pos = actor->getPosition();
+		msg.dma = actor->getModel()->getDisplayMatrix();
+		msg.id = this->actorLst->getIndexOfWO(actor);
+		msg.new_indicator = 0;
+		client->sendNetMsgSynchronousTCP(msg);
+		if (actor->getLabel() == "WheeledCar") {
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
-		else
+			NetMsgSimpleWO msg;
+			msg.pos = this->wcHealthStr->getPosition();
+			msg.dma = this->wcHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->wcHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
+		else {
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+			NetMsgSimpleWO msg;
+			msg.pos = this->jetHealthStr->getPosition();
+			msg.dma = this->jetHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->jetHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
 	}
 	// left
 	if (key.keysym.sym == SDLK_a)
@@ -241,10 +305,30 @@ void GLViewFinalClient::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->getModel()->rotateAboutGlobalZ(0.3f);
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * 1.5f);
-		if (actor->getLabel() == "WheeledCar")
+		NetMsgSimpleWO msg;
+		msg.pos = actor->getPosition();
+		msg.dma = actor->getModel()->getDisplayMatrix();
+		msg.id = this->actorLst->getIndexOfWO(actor);
+		msg.new_indicator = 0;
+		client->sendNetMsgSynchronousTCP(msg);
+		if (actor->getLabel() == "WheeledCar") {
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
-		else
+			NetMsgSimpleWO msg;
+			msg.pos = this->wcHealthStr->getPosition();
+			msg.dma = this->wcHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->wcHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
+		else {
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+			NetMsgSimpleWO msg;
+			msg.pos = this->jetHealthStr->getPosition();
+			msg.dma = this->jetHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->jetHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
 	}
 	// right
 	if (key.keysym.sym == SDLK_d)
@@ -252,10 +336,30 @@ void GLViewFinalClient::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->getModel()->rotateAboutGlobalZ(-0.3f);
 		Vector look_dir = actor->getLookDirection();
 		actor->moveRelative(look_dir * 1.5f);
-		if (actor->getLabel() == "WheeledCar")
+		NetMsgSimpleWO msg;
+		msg.pos = actor->getPosition();
+		msg.dma = actor->getModel()->getDisplayMatrix();
+		msg.id = this->actorLst->getIndexOfWO(actor);
+		msg.new_indicator = 0;
+		client->sendNetMsgSynchronousTCP(msg);
+		if (actor->getLabel() == "WheeledCar") {
 			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
-		else
+			NetMsgSimpleWO msg;
+			msg.pos = this->wcHealthStr->getPosition();
+			msg.dma = this->wcHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->wcHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
+		else {
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+			NetMsgSimpleWO msg;
+			msg.pos = this->jetHealthStr->getPosition();
+			msg.dma = this->jetHealthStr->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(this->jetHealthStr);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+		}
 	}
 	
 	if (actor->getLabel() == "Jet") {
@@ -264,12 +368,60 @@ void GLViewFinalClient::onKeyDown(const SDL_KeyboardEvent& key)
 		{
 			actor->moveRelative(Vector(0.f, 0.f, 0.1f));
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+			NetMsgSimpleWO msg;
+			msg.pos = actor->getPosition();
+			msg.dma = actor->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(actor);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+			if (actor->getLabel() == "WheeledCar") {
+				this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
+				NetMsgSimpleWO msg;
+				msg.pos = this->wcHealthStr->getPosition();
+				msg.dma = this->wcHealthStr->getModel()->getDisplayMatrix();
+				msg.id = this->actorLst->getIndexOfWO(this->wcHealthStr);
+				msg.new_indicator = 0;
+				client->sendNetMsgSynchronousTCP(msg);
+			}
+			else {
+				this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+				NetMsgSimpleWO msg;
+				msg.pos = this->jetHealthStr->getPosition();
+				msg.dma = this->jetHealthStr->getModel()->getDisplayMatrix();
+				msg.id = this->actorLst->getIndexOfWO(this->jetHealthStr);
+				msg.new_indicator = 0;
+				client->sendNetMsgSynchronousTCP(msg);
+			}
 		}
 		// lower
 		if (key.keysym.sym == SDLK_c)
 		{
 			actor->moveRelative(Vector(0.f, 0.f, -0.1f));
 			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+			NetMsgSimpleWO msg;
+			msg.pos = actor->getPosition();
+			msg.dma = actor->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(actor);
+			msg.new_indicator = 0;
+			client->sendNetMsgSynchronousTCP(msg);
+			if (actor->getLabel() == "WheeledCar") {
+				this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
+				NetMsgSimpleWO msg;
+				msg.pos = this->wcHealthStr->getPosition();
+				msg.dma = this->wcHealthStr->getModel()->getDisplayMatrix();
+				msg.id = this->actorLst->getIndexOfWO(this->wcHealthStr);
+				msg.new_indicator = 0;
+				client->sendNetMsgSynchronousTCP(msg);
+			}
+			else {
+				this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
+				NetMsgSimpleWO msg;
+				msg.pos = this->jetHealthStr->getPosition();
+				msg.dma = this->jetHealthStr->getModel()->getDisplayMatrix();
+				msg.id = this->actorLst->getIndexOfWO(this->jetHealthStr);
+				msg.new_indicator = 0;
+				client->sendNetMsgSynchronousTCP(msg);
+			}
 		}
 	}
 
@@ -393,6 +545,7 @@ void Aftr::GLViewFinalClient::loadMap()
 	wcHealthStr->rotateAboutGlobalZ(-PI / 2);
 	wcHealthStr->setPosition(wheeledCarWO->getPosition().x, wheeledCarWO->getPosition().y, wheeledCarWO->getPosition().z + 5);
 	worldLst->push_back(wcHealthStr);
+	actorLst->push_back(wcHealthStr);
 
 	WOPhysicX* jetWO = WOPhysicX::New(jet, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
 	jetWO->setPosition(Vector(40, 15, 100));
@@ -418,6 +571,7 @@ void Aftr::GLViewFinalClient::loadMap()
 	jetHealthStr->rotateAboutGlobalZ(-PI / 2);
 	jetHealthStr->setPosition(jetWO->getPosition().x, jetWO->getPosition().y, jetWO->getPosition().z - 5);
 	worldLst->push_back(jetHealthStr);
+	actorLst->push_back(jetHealthStr);
 
 	//if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
 	//	actor = wheeledCarWO;
