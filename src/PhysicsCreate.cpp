@@ -217,6 +217,17 @@ PxRigidDynamic* PhysicsCreate::createDynamicPlane(WOPhysicX* data, bool isMActor
 	return this->planeActor;
 }
 
+void PhysicsCreate::removeActorsFromScene() {
+	if (this->removedActors.empty()) {
+		return;
+	}
+
+	for (size_t i = 0; i < this->removedActors.size(); i++) {
+		this->scene->removeActor(*this->removedActors[i]);
+	}
+	this->removedActors.clear();
+}
+
 void PhysicsCreate::hitten() {
 	cout << "!!!!Entering HITTEN()!!!!!!" << endl;
 	if (this->tActor) {
@@ -235,6 +246,7 @@ void PhysicsCreate::hitten() {
 				//int id = ManagerGLView::getGLView()->getWorldContainer()->getIndexOfWO(wo);
 				ManagerGLView::getGLView()->getWorldContainer()->eraseViaWOptr(wo);
 				ManagerGLView::getGLView()->getActorLst()->eraseViaWOptr(wo);
+				removedActors.push_back(*missileIter);
 				this->missileActors.erase(missileIter);
 			}
 			explodeMissileActors.erase(explodeMissileActors.begin() + i);
@@ -345,3 +357,8 @@ PxCooking* PhysicsCreate::getCooking() {
 PxPhysics* PhysicsCreate::getPhysics() {
 	return this->physics;
 }
+
+int PhysicsCreate::getTargetHealth() {
+	return static_cast<int>(targetHealth);
+}
+

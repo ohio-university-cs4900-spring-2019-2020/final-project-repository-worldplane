@@ -38,6 +38,8 @@
 #include "io.h"
 #include "WOPhysXTriangularMesh.h"
 #include "WOGridECEFElevation.h"
+#include "WOFTGLString.h"
+#include "MGLFTGLString.h"
 
 using namespace Aftr;
 using namespace std;
@@ -130,7 +132,17 @@ void GLViewNewModule::updateWorld()
 	GLView::updateWorld(); //Just call the parent's update world first.
 						   //If you want to add additional functionality, do it after
 						   //this call.
+	this->physEngine->removeActorsFromScene();
+	if (actor->getLabel() == "Jet") {
+		string health = to_string(physEngine->getTargetHealth()) + " / 200";
+		this->wcHealthStr->setText(health);
+	}
+	else {
+		string health = to_string(physEngine->getTargetHealth()) + " / 200";
+		this->jetHealthStr->setText(health);
+	}
 
+	//transit
 	float dt = ManagerSDLTime::getTimeSinceLastPhysicsIteration() / 500.f;
 	physx::PxScene* scene = this->physEngine->getScene();
 	scene->simulate(dt);
@@ -201,6 +213,10 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->moveRelative(look_dir * -1);
 		this->nmc->setObjPos(actor->getPosition());
 		this->nmc->setRotateZ(0.0f);
+		if (actor->getLabel() == "WheeledCar")
+			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
+		else 
+			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 	}
 	// forward
 	if (key.keysym.sym == SDLK_w)
@@ -209,6 +225,10 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->moveRelative(look_dir);
 		this->nmc->setObjPos(actor->getPosition());
 		this->nmc->setRotateZ(0.0f);
+		if (actor->getLabel() == "WheeledCar")
+			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
+		else
+			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 	}
 	// left
 	if (key.keysym.sym == SDLK_a)
@@ -218,6 +238,10 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->moveRelative(look_dir * 1.5f);
 		this->nmc->setObjPos(actor->getPosition());
 		this->nmc->setRotateZ(0.3f);
+		if (actor->getLabel() == "WheeledCar")
+			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
+		else
+			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 	}
 	// right
 	if (key.keysym.sym == SDLK_d)
@@ -227,6 +251,10 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 		actor->moveRelative(look_dir * 1.5f);
 		this->nmc->setObjPos(actor->getPosition());
 		this->nmc->setRotateZ(-0.3f);
+		if (actor->getLabel() == "WheeledCar")
+			this->wcHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 5);
+		else
+			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 	}
 	
 	if (actor->getLabel() == "Jet") {
@@ -237,7 +265,7 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 			actor->moveRelative(Vector(0.f, 0.f, 0.1f));
 			this->nmc->setObjPos(actor->getPosition());
 			this->nmc->setRotateZ(0.0f);
-
+			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 		}
 		// lower
 		if (key.keysym.sym == SDLK_c)
@@ -245,6 +273,7 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 			actor->moveRelative(Vector(0.f, 0.f, -0.1f));
 			this->nmc->setObjPos(actor->getPosition());
 			this->nmc->setRotateZ(0.0f);
+			this->jetHealthStr->setPosition(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5);
 		}
 	}
 
@@ -359,6 +388,15 @@ void Aftr::GLViewNewModule::loadMap()
 		wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, false);
 	}
 	this->physEngine->addToScene(wheeledCarActor);
+	//current health label
+	wcHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
+	wcHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
+	wcHealthStr->getModelT<MGLFTGLString>()->setSize(10, 10);
+	wcHealthStr->getModelT<MGLFTGLString>()->setText("200 / 200");
+	wcHealthStr->rotateAboutGlobalX(PI / 2);
+	wcHealthStr->rotateAboutGlobalZ(-PI / 2);
+	wcHealthStr->setPosition(wheeledCarWO->getPosition().x, wheeledCarWO->getPosition().y, wheeledCarWO->getPosition().z + 5);
+	worldLst->push_back(wcHealthStr);
 
 	WOPhysicX* jetWO = WOPhysicX::New(jet, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
 	jetWO->setPosition(Vector(40, 15, 100));
@@ -375,6 +413,15 @@ void Aftr::GLViewNewModule::loadMap()
 		actor = jetWO;
 	}
 	this->physEngine->addToScene(planeActor);
+	//current health label
+	jetHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
+	jetHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
+	jetHealthStr->getModelT<MGLFTGLString>()->setSize(10, 10);
+	jetHealthStr->getModelT<MGLFTGLString>()->setText("200 / 200");
+	jetHealthStr->rotateAboutGlobalX(PI / 2);
+	jetHealthStr->rotateAboutGlobalZ(-PI / 2);
+	jetHealthStr->setPosition(jetWO->getPosition().x, jetWO->getPosition().y, jetWO->getPosition().z - 5);
+	worldLst->push_back(jetHealthStr);
 
 	//if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
 	//	actor = wheeledCarWO;

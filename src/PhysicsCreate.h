@@ -17,6 +17,8 @@ namespace Aftr {
 		physx::PxRigidDynamic* createDynamicMissile(WOPhysicX* data, physx::PxVec3 volecity);
 		physx::PxRigidDynamic* createDynamicPlane(WOPhysicX* data, bool isMActor);
 		void hitten();
+		void removeActorsFromScene();
+		int getTargetHealth();
 
 		physx::PxScene* getScene();
 		physx::PxCooking* getCooking();
@@ -47,6 +49,7 @@ namespace Aftr {
 		physx::PxRigidDynamic* planeActor;
 		std::vector<physx::PxRigidDynamic*> missileActors;
 		std::vector<physx::PxRigidDynamic*> explodeMissileActors;
+		std::vector<physx::PxRigidDynamic*> removedActors;
 	};
 }
 

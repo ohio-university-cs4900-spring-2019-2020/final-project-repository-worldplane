@@ -7,6 +7,7 @@
 #include "NetMsgCreate.h"
 #include "WOPhysicX.h"
 #include "WOPhysXTriangularMesh.h"
+#include "WOFTGLString.h"
 
 namespace Aftr
 {
@@ -49,6 +50,8 @@ protected:
    NetMsgCreate* nmc;
    PhysicsCreate* physEngine;
    WOPhysXTriangularMesh* triangleMesh;
+   WOFTGLString* wcHealthStr;
+   WOFTGLString* jetHealthStr;
 };
 
 /** \} */
