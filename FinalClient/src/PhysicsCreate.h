@@ -16,6 +16,7 @@ namespace Aftr {
 		physx::PxRigidDynamic* createWheeledCar(WOPhysicX* data, bool isMActor);
 		physx::PxRigidDynamic* createDynamicMissile(WOPhysicX* data, physx::PxVec3 volecity);
 		physx::PxRigidDynamic* createDynamicPlane(WOPhysicX* data, bool isMActor);
+		void removeMissile(std::vector<physx::PxRigidDynamic*>::iterator missileIter);
 		void hitten();
 		void removeActorsFromScene();
 

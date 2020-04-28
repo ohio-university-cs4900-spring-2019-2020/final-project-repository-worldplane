@@ -229,6 +229,16 @@ void PhysicsCreate::removeActorsFromScene() {
 	this->removedActors.clear();
 }
 
+void PhysicsCreate::removeMissile(std::vector<PxRigidDynamic*>::iterator missileIter) {
+	WOPhysicX* wo = static_cast<WOPhysicX*>((*missileIter)->userData);
+	wo->isVisible = false;
+	//int id = ManagerGLView::getGLView()->getWorldContainer()->getIndexOfWO(wo);
+	ManagerGLView::getGLView()->getWorldContainer()->eraseViaWOptr(wo);
+	ManagerGLView::getGLView()->getActorLst()->eraseViaWOptr(wo);
+	this->removedActors.push_back(*missileIter);
+	this->missileActors.erase(missileIter);
+}
+
 void PhysicsCreate::hitten() {
 	cout << "!!!!Entering HITTEN()!!!!!!" << endl;
 	if (this->tActor) {
@@ -242,15 +252,9 @@ void PhysicsCreate::hitten() {
 				this->missileActors.begin(), this->missileActors.end(), currentExplode);
 			//remove missile			
 			if (missileIter != this->missileActors.end()) {
-				WOPhysicX* wo = static_cast<WOPhysicX*>((*missileIter)->userData);
-				wo->isVisible = false;
-				//int id = ManagerGLView::getGLView()->getWorldContainer()->getIndexOfWO(wo);
-				ManagerGLView::getGLView()->getWorldContainer()->eraseViaWOptr(wo);
-				ManagerGLView::getGLView()->getActorLst()->eraseViaWOptr(wo);
-				removedActors.push_back(*missileIter);
-				this->missileActors.erase(missileIter);
+				this->removeMissile(missileIter);
 			}
-			explodeMissileActors.erase(explodeMissileActors.begin() + i);
+			this->explodeMissileActors.erase(this->explodeMissileActors.begin() + i);
 			//currentExplode->release();			
 			
 			//damage to target
@@ -277,18 +281,25 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 
 		if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
 		{
+			// hitten the target
 			if ((pairHeader.actors[0] == this->tActor) || (pairHeader.actors[1] == this->tActor))
 			{
 				PxActor* otherActor = (this->tActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
-				//PxTransform trans = PxTransform(PxVec3(data->getPosition().x, data->getPosition().y, data->getPosition().z));
-				//PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
-				//PxRigidDynamic* missile = PxCreateDynamic(*this->physics, trans, *shape, 10.0f);
 				PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor);
-				// insert only once
 				if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
 					this->explodeMissileActors.push_back(missile);
 				explodeMissileActors[0]->getGlobalPose().p;
 				break;
+			}
+
+			// collision of missiles
+			std::vector<PxRigidDynamic*>::iterator missileIter1 = std::find(
+				this->missileActors.begin(), this->missileActors.end(), pairHeader.actors[0]);
+			std::vector<PxRigidDynamic*>::iterator missileIter2 = std::find(
+				this->missileActors.begin(), this->missileActors.end(), pairHeader.actors[1]);
+			if ((missileIter1 != this->missileActors.end()) && (missileIter2 != this->missileActors.end())) {
+				this->removeMissile(missileIter1);
+				this->removeMissile(missileIter2);
 			}
 		}
 
