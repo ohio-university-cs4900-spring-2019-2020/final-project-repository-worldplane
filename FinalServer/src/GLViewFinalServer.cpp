@@ -34,7 +34,6 @@
 
 //If we want to use way points, we need to include this.
 #include "FinalServerWayPoints.h"
-#include "NetMessengerClient.h"
 #include "io.h"
 #include "WOPhysXTriangularMesh.h"
 #include "WOGridECEFElevation.h"
@@ -141,22 +140,21 @@ void GLViewFinalServer::updateWorld()
 		if (this->ggStr == nullptr) {
 			this->updateHealthLabel();
 
-			actor = nullptr;
-			actorLst->clear();
 			this->ggStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
 			this->ggStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(0.5f, 0.5f, 1.5f, 1.0f));
 			this->ggStr->getModelT<MGLFTGLString>()->setSize(50, 50);
-			this->ggStr->getModelT<MGLFTGLString>()->setText("GAME OVER");
+			string text = "GAME OVER\nYOU" + this->physEngine->getTargetHealth() <= 0 ? "WINS" : "LOSE";
+			this->ggStr->getModelT<MGLFTGLString>()->setText(text);
 			this->ggStr->rotateAboutGlobalX(PI / 2);
 			this->ggStr->rotateAboutGlobalZ(-PI / 2);
 			this->ggStr->setPosition(Vector(40, 40, 40));
 			worldLst->push_back(this->ggStr);
+
+			actor = nullptr;
+			actorLst->clear();
 		}
 
 		return;
-	}
-	if (actor != nullptr) {
-		this->updateHealthLabel();
 	}
 	//transit
 	float dt = ManagerSDLTime::getTimeSinceLastPhysicsIteration() / 500.f;
@@ -175,15 +173,19 @@ void GLViewFinalServer::updateWorld()
 		WOPhysicX* wo = static_cast<WOPhysicX*>(aas[i]->userData);
 		Mat4 matrix = wo->onCreateNVPhysXActor(&trans);
 
-		// Network
-		//if (this->client->isTCPSocketOpen()) {
-		//	this->nmc->setObjPos(wo->getPosition());
-		//	this->nmc->setRotateZ(0.0f);
-		//	this->nmc->setActorIndex(actorLst->getIndexOfWO(wo));
-		//	this->nmc->setModelPath("");
-		//	this->nmc->setDisplayMatrix(matrix);
-		//	this->client->sendNetMsgSynchronousTCP(*this->nmc);
-		//}
+
+		NetMsgSimpleWO msg;
+		msg.pos = wo->getPosition();
+		msg.dma = wo->getModel()->getDisplayMatrix();
+		msg.id = this->actorLst->getIndexOfWO(wo);
+		msg.new_indicator = 0;
+		if (msg.id != -1) {
+			client->sendNetMsgSynchronousTCP(msg);
+		}
+
+	}
+	if (actor != nullptr) {
+		this->updateHealthLabel();
 	}
 }
 
@@ -436,6 +438,12 @@ void GLViewFinalServer::onKeyDown(const SDL_KeyboardEvent& key)
 			missileWO->setEngine(this->physEngine);
 			physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, 90.0f));
 			this->physEngine->addToScene(da);
+			NetMsgSimpleWO msg;
+			msg.pos = missileWO->getPosition();
+			msg.dma = missileWO->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(missileWO);
+			msg.new_indicator = 11;
+			client->sendNetMsgSynchronousTCP(msg);
 		}
 		else {
 			missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5));
@@ -445,13 +453,13 @@ void GLViewFinalServer::onKeyDown(const SDL_KeyboardEvent& key)
 			missileWO->setEngine(this->physEngine);
 			physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, -5.0f));
 			this->physEngine->addToScene(da);
+			NetMsgSimpleWO msg;
+			msg.pos = missileWO->getPosition();
+			msg.dma = missileWO->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(missileWO);
+			msg.new_indicator = 12;
+			client->sendNetMsgSynchronousTCP(msg);
 		}
-		NetMsgSimpleWO msg;
-		msg.pos = missileWO->getPosition();
-		msg.dma = missileWO->getModel()->getDisplayMatrix();
-		msg.id = this->actorLst->getIndexOfWO(missileWO);
-		msg.new_indicator = 1;
-		//client->sendNetMsgSynchronousTCP(msg);
 	}
 
 	//if (this->client->isTCPSocketOpen()) {

@@ -1,8 +1,10 @@
 #include "PhysicsCreate.h"
 #include "iostream"
 #include "ManagerGLView.h"
+#include "GLViewFinalServer.h"
 #include "WorldContainer.h"
 #include "GLView.h"
+#include "Model.h"
 
 
 using namespace Aftr;
@@ -233,6 +235,14 @@ void PhysicsCreate::removeMissile(std::vector<PxRigidDynamic*>::iterator missile
 	WOPhysicX* wo = static_cast<WOPhysicX*>((*missileIter)->userData);
 	wo->isVisible = false;
 	//int id = ManagerGLView::getGLView()->getWorldContainer()->getIndexOfWO(wo);
+
+	NetMsgSimpleWO msg;
+	msg.pos = wo->getPosition();
+	msg.dma = wo->getModel()->getDisplayMatrix();
+	msg.id = ManagerGLView::getGLView()->getActorLst()->getIndexOfWO(wo);
+	msg.new_indicator = 22;
+	((GLViewFinalServer*)ManagerGLView::getGLView())->client->sendNetMsgSynchronousTCP(msg);
+
 	ManagerGLView::getGLView()->getWorldContainer()->eraseViaWOptr(wo);
 	ManagerGLView::getGLView()->getActorLst()->eraseViaWOptr(wo);
 	this->removedActors.push_back(*missileIter);
@@ -285,6 +295,15 @@ void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxCon
 			if ((pairHeader.actors[0] == this->tActor) || (pairHeader.actors[1] == this->tActor))
 			{
 				PxActor* otherActor = (this->tActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
+				PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor);
+				if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
+					this->explodeMissileActors.push_back(missile);
+				explodeMissileActors[0]->getGlobalPose().p;
+				break;
+			}
+			if ((pairHeader.actors[0] == this->mActor) || (pairHeader.actors[1] == this->mActor))
+			{
+				PxActor* otherActor = (this->mActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
 				PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor);
 				if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
 					this->explodeMissileActors.push_back(missile);

@@ -40,15 +40,14 @@ public:
    virtual void onKeyDown( const SDL_KeyboardEvent& key );
    virtual void onKeyUp( const SDL_KeyboardEvent& key );
    void updateHealthLabel();
+   NetMessengerClient* client;
+   PhysicsCreate* physEngine;
 
 protected:
    GLViewFinalServer( const std::vector< std::string >& args );
    virtual void onCreate();   
 
    SoundManager* smgr;
-   NetMessengerClient* client;
-   NetMsgSimpleWO* nmc;
-   PhysicsCreate* physEngine;
    WOPhysXTriangularMesh* triangleMesh;
    WOFTGLString* wcHealthStr;
    WOFTGLString* jetHealthStr;

@@ -24,20 +24,32 @@ bool NetMsgSimpleWO::fromStream(NetMessengerStreamBuffer & is)
 
 void NetMsgSimpleWO::onMessageArrived()
 {
-	std::cout << "get message!" << std::endl;
 	if (new_indicator == 0) {
 		WO* wo = ((GLViewFinalClient*)ManagerGLView::getGLView())->getActorLst()->at(id);
 		wo->getModel()->setDisplayMatrix(dma);
 		wo->setPosition(pos);
 	}
-	else {
-		std::string jet(ManagerEnvironmentConfiguration::getSMM() + "/models/jet_wheels_down_PP.wrl");
-		WO* wo1 = WO::New(jet, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-		wo1->setPosition(Vector(10, 0, 50));
-		wo1->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
-		wo1->setLabel("jetnew");
-		((GLViewFinalClient*)ManagerGLView::getGLView())->getWorldContainer()->push_back(wo1);
-		((GLViewFinalClient*)ManagerGLView::getGLView())->getActorLst()->push_back(wo1);
+	else if (new_indicator == 11) { // missle addition in wheelcar
+		std::string missile(ManagerEnvironmentConfiguration::getSMM() + "/models/rocket/missle/missiles.obj");
+		WOPhysicX* missileWO = WOPhysicX::New(missile, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+		missileWO->setPosition(pos);
+		missileWO->setLabel("Missile");
+		missileWO->getModel()->setDisplayMatrix(dma);
+		((GLViewFinalClient*)ManagerGLView::getGLView())->getWorldContainer()->push_back(missileWO);
+		((GLViewFinalClient*)ManagerGLView::getGLView())->getActorLst()->push_back(missileWO);
+	}
+	else if (new_indicator == 12) { // missle addition in jet
+		std::string missile(ManagerEnvironmentConfiguration::getSMM() + "/models/rocket/missle/missiles.obj");
+		WOPhysicX* missileWO = WOPhysicX::New(missile, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
+		missileWO->setPosition(pos);
+		missileWO->setLabel("Missile");
+		missileWO->getModel()->setDisplayMatrix(dma);
+		((GLViewFinalClient*)ManagerGLView::getGLView())->getWorldContainer()->push_back(missileWO);
+		((GLViewFinalClient*)ManagerGLView::getGLView())->getActorLst()->push_back(missileWO);
+	}
+	else if (new_indicator == 22) { // missle delete
+		((GLViewFinalClient*)ManagerGLView::getGLView())->getWorldContainer()->eraseViaWOIndex(id);
+		((GLViewFinalClient*)ManagerGLView::getGLView())->getActorLst()->eraseViaWOIndex(id);
 	}
 }
 

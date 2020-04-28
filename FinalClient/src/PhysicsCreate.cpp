@@ -233,8 +233,6 @@ void PhysicsCreate::removeMissile(std::vector<PxRigidDynamic*>::iterator missile
 	WOPhysicX* wo = static_cast<WOPhysicX*>((*missileIter)->userData);
 	wo->isVisible = false;
 	//int id = ManagerGLView::getGLView()->getWorldContainer()->getIndexOfWO(wo);
-	ManagerGLView::getGLView()->getWorldContainer()->eraseViaWOptr(wo);
-	ManagerGLView::getGLView()->getActorLst()->eraseViaWOptr(wo);
 	this->removedActors.push_back(*missileIter);
 	this->missileActors.erase(missileIter);
 }
@@ -275,42 +273,51 @@ void PhysicsCreate::hitten() {
 }
 
 void PhysicsCreate::onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs) {
-	for (PxU32 i = 0; i < nbPairs; i++)
-	{
-		const PxContactPair& cp = pairs[i];
+	//for (PxU32 i = 0; i < nbPairs; i++)
+	//{
+	//	const PxContactPair& cp = pairs[i];
 
-		if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
-		{
-			// hitten the target
-			if ((pairHeader.actors[0] == this->tActor) || (pairHeader.actors[1] == this->tActor))
-			{
-				PxActor* otherActor = (this->tActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
-				PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor);
-				if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
-					this->explodeMissileActors.push_back(missile);
-				explodeMissileActors[0]->getGlobalPose().p;
-				break;
-			}
+	//	if (cp.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
+	//	{
+	//		// hitten the target
+	//		if ((pairHeader.actors[0] == this->tActor) || (pairHeader.actors[1] == this->tActor))
+	//		{
+	//			PxActor* otherActor = (this->tActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
+	//			PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor);
+	//			if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
+	//				this->explodeMissileActors.push_back(missile);
+	//			explodeMissileActors[0]->getGlobalPose().p;
+	//			break;
+	//		}
+	//		if ((pairHeader.actors[0] == this->mActor) || (pairHeader.actors[1] == this->mActor))
+	//		{
+	//			PxActor* otherActor = (this->mActor == pairHeader.actors[0]) ? pairHeader.actors[1] : pairHeader.actors[0];
+	//			PxRigidDynamic* missile = reinterpret_cast<PxRigidDynamic*>(otherActor);
+	//			if (std::find(this->explodeMissileActors.begin(), this->explodeMissileActors.end(), missile) == this->explodeMissileActors.end())
+	//				this->explodeMissileActors.push_back(missile);
+	//			explodeMissileActors[0]->getGlobalPose().p;
+	//			break;
+	//		}
 
-			// collision of missiles
-			std::vector<PxRigidDynamic*>::iterator missileIter1 = std::find(
-				this->missileActors.begin(), this->missileActors.end(), pairHeader.actors[0]);
-			std::vector<PxRigidDynamic*>::iterator missileIter2 = std::find(
-				this->missileActors.begin(), this->missileActors.end(), pairHeader.actors[1]);
-			if ((missileIter1 != this->missileActors.end()) && (missileIter2 != this->missileActors.end())) {
-				this->removeMissile(missileIter1);
-				this->removeMissile(missileIter2);
-			}
-		}
+	//		// collision of missiles
+	//		std::vector<PxRigidDynamic*>::iterator missileIter1 = std::find(
+	//			this->missileActors.begin(), this->missileActors.end(), pairHeader.actors[0]);
+	//		std::vector<PxRigidDynamic*>::iterator missileIter2 = std::find(
+	//			this->missileActors.begin(), this->missileActors.end(), pairHeader.actors[1]);
+	//		if ((missileIter1 != this->missileActors.end()) && (missileIter2 != this->missileActors.end())) {
+	//			this->removeMissile(missileIter1);
+	//			this->removeMissile(missileIter2);
+	//		}
+	//	}
 
-		const PxContactPair& current = *pairs++;
-		if (current.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
-			printf("Shape is entering trigger volume\n");
-		if (current.events & PxPairFlag::eNOTIFY_TOUCH_LOST)
-			printf("Shape is leaving trigger volume\n");
-	}
+	//	const PxContactPair& current = *pairs++;
+	//	if (current.events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
+	//		printf("Shape is entering trigger volume\n");
+	//	if (current.events & PxPairFlag::eNOTIFY_TOUCH_LOST)
+	//		printf("Shape is leaving trigger volume\n");
+	//}
 
-	this->hitten();
+	//this->hitten();
 }
 
 void PhysicsCreate::onTrigger(PxTriggerPair* pairs, PxU32 count) {

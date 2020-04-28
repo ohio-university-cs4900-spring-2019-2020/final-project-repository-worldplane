@@ -3,6 +3,7 @@
 #include "NetMsg.h"
 #include "Vector.h"
 #include "Mat4.h"
+#include "PhysicsCreate.h"
 
 namespace Aftr {
 	class NetMsgSimpleWO : public NetMsg {

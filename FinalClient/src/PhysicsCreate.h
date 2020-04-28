@@ -3,6 +3,7 @@
 #include "PxPhysicsAPI.h"
 #include "WOPhysicX.h"
 #include "./cooking/PxCooking.h"
+#include "NetMsgSimpleWO.h"
 
 namespace Aftr {
 	class WOPhysicX;

@@ -137,66 +137,6 @@ void GLViewFinalClient::updateWorld()
 						   //If you want to add additional functionality, do it after
 						   //this call.
 
-	if (this->physEngine->isGameOver()) {
-		if (this->ggStr == nullptr) {
-			this->updateHealthLabel();
-
-			actor = nullptr;
-			actorLst->clear();
-			this->ggStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
-			this->ggStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(0.5f, 0.5f, 1.5f, 1.0f));
-			this->ggStr->getModelT<MGLFTGLString>()->setSize(50, 50);
-			this->ggStr->getModelT<MGLFTGLString>()->setText("GAME OVER");
-			this->ggStr->rotateAboutGlobalX(PI / 2);
-			this->ggStr->rotateAboutGlobalZ(-PI / 2);
-			this->ggStr->setPosition(Vector(40, 40, 40));
-			worldLst->push_back(this->ggStr);
-		}
-
-		return;
-	}
-	if (actor != nullptr) {
-		this->updateHealthLabel();
-	}
-	//transit
-	float dt = ManagerSDLTime::getTimeSinceLastPhysicsIteration() / 500.f;
-	physx::PxScene* scene = this->physEngine->getScene();
-	scene->simulate(dt);
-	scene->fetchResults(true);
-
-	physx::PxU32 numAAs = 0;
-	physx::PxActor** aas = scene->getActiveActors(numAAs);
-
-	//poses that have changed since the last update
-	for (physx::PxU32 i = 0; i < numAAs; i++)
-	{
-		physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(aas[i]);
-		physx::PxTransform trans = actor->getGlobalPose();
-		WOPhysicX* wo = static_cast<WOPhysicX*>(aas[i]->userData);
-		Mat4 matrix = wo->onCreateNVPhysXActor(&trans);
-
-		// Network
-		//if (this->client->isTCPSocketOpen()) {
-		//	this->nmc->setObjPos(wo->getPosition());
-		//	this->nmc->setRotateZ(0.0f);
-		//	this->nmc->setActorIndex(actorLst->getIndexOfWO(wo));
-		//	this->nmc->setModelPath("");
-		//	this->nmc->setDisplayMatrix(matrix);
-		//	this->client->sendNetMsgSynchronousTCP(*this->nmc);
-		//}
-	}
-}
-
-void GLViewFinalClient::updateHealthLabel() {
-	this->physEngine->removeActorsFromScene();
-	if (actor->getLabel() == "Jet") {
-		string health = to_string(physEngine->getTargetHealth()) + " / 200";
-		this->wcHealthStr->setText(health);
-	}
-	else {
-		string health = to_string(physEngine->getTargetHealth()) + " / 200";
-		this->jetHealthStr->setText(health);
-	}
 }
 
 void GLViewFinalClient::onResizeWindow(GLsizei width, GLsizei height)
@@ -232,10 +172,6 @@ void GLViewFinalClient::onKeyDown(const SDL_KeyboardEvent& key)
 
 	if (actor == nullptr) {
 		return;
-	}
-
-	if (key.keysym.sym == SDLK_q) {
-		this->physEngine->shutdown();
 	}
 	// backward
 	if (key.keysym.sym == SDLK_s)
@@ -433,18 +369,26 @@ void GLViewFinalClient::onKeyDown(const SDL_KeyboardEvent& key)
 			missileWO->setLabel("Missile");
 			worldLst->push_back(missileWO);
 			actorLst->push_back(missileWO);
-			missileWO->setEngine(this->physEngine);
-			physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, 90.0f));
-			this->physEngine->addToScene(da);
+
+			NetMsgSimpleWO msg;
+			msg.pos = missileWO->getPosition();
+			msg.dma = missileWO->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(missileWO);
+			msg.new_indicator = 11;
+			client->sendNetMsgSynchronousTCP(msg);
 		}
 		else {
 			missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z - 5));
 			missileWO->setLabel("Missile");
 			worldLst->push_back(missileWO);
 			actorLst->push_back(missileWO);
-			missileWO->setEngine(this->physEngine);
-			physx::PxRigidDynamic* da = this->physEngine->createDynamicMissile(missileWO, physx::PxVec3(0.0f, 0.0f, -5.0f));
-			this->physEngine->addToScene(da);
+
+			NetMsgSimpleWO msg;
+			msg.pos = missileWO->getPosition();
+			msg.dma = missileWO->getModel()->getDisplayMatrix();
+			msg.id = this->actorLst->getIndexOfWO(missileWO);
+			msg.new_indicator = 12;
+			client->sendNetMsgSynchronousTCP(msg);
 		}
 	}
 
@@ -518,24 +462,15 @@ void Aftr::GLViewFinalClient::loadMap()
 	grassSkin.setSpecularCoefficient(10); // How "sharp" are the specular highlights (bigger is sharper, 1000 is very sharp, 10 is very dull)
 	wo->setLabel("Grass");
 	worldLst->push_back(wo);
-	physx::PxRigidStatic* sa = this->physEngine->createPlane(wo);
-	this->physEngine->addToScene(sa);
 
 	WOPhysicX* wheeledCarWO = WOPhysicX::New(wheeledCar, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
 	wheeledCarWO->setPosition(Vector(40, 15, 5));
 	wheeledCarWO->setLabel("WheeledCar");
 	worldLst->push_back(wheeledCarWO);
 	actorLst->push_back(wheeledCarWO);
-	wheeledCarWO->setEngine(this->physEngine);
-	physx::PxRigidDynamic* wheeledCarActor;
 	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
-		wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, true);
 		actor = wheeledCarWO;
 	}
-	else {
-		wheeledCarActor = this->physEngine->createWheeledCar(wheeledCarWO, false);
-	}
-	this->physEngine->addToScene(wheeledCarActor);
 	//current health label
 	wcHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
 	wcHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
@@ -552,16 +487,9 @@ void Aftr::GLViewFinalClient::loadMap()
 	jetWO->setLabel("Jet");
 	worldLst->push_back(jetWO);
 	actorLst->push_back(jetWO);
-	jetWO->setEngine(this->physEngine);
-	physx::PxRigidDynamic* planeActor;
-	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
-		planeActor = this->physEngine->createDynamicPlane(jetWO, false);
-	}
-	else {
-		planeActor = this->physEngine->createDynamicPlane(jetWO, true);
+	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") != "12683") {
 		actor = jetWO;
 	}
-	this->physEngine->addToScene(planeActor);
 	//current health label
 	jetHealthStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
 	jetHealthStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(1.0f, 0.5f, 1.5f, 1.0f));
