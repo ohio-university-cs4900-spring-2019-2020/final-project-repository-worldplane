@@ -1,5 +1,8 @@
 #include "PhysicsCreate.h"
 #include "iostream"
+#include "ManagerGLView.h"
+#include "WorldContainer.h"
+#include "GLView.h"
 
 
 using namespace Aftr;
@@ -178,6 +181,8 @@ PxRigidDynamic* PhysicsCreate::createDynamicMissile(WOPhysicX* data, PxVec3 velo
 	PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
 	PxRigidDynamic* actor = PxCreateDynamic(*this->physics, trans, *shape, 10.0f);
 	actor->setLinearVelocity(velocity);
+	actor->setMass(0.001f);
+	actor->setMassSpaceInertiaTensor(PxVec3(0.001f));
 	actor->userData = data;
 	//actor->setLinearDamping(0.15f);
 	//actor->setAngularDamping(15.f);
@@ -211,9 +216,15 @@ void PhysicsCreate::hitten() {
 
 			std::vector<PxRigidDynamic*>::iterator missileIter = std::find(
 				this->missileActors.begin(), this->missileActors.end(), currentExplode);
-			//remove missile
-			if (missileIter != this->missileActors.end())
+			//remove missile			
+			if (missileIter != this->missileActors.end()) {
+				WOPhysicX* wo = static_cast<WOPhysicX*>((*missileIter)->userData);
+				wo->isVisible = false;
+				//int id = ManagerGLView::getGLView()->getWorldContainer()->getIndexOfWO(wo);
+				ManagerGLView::getGLView()->getWorldContainer()->eraseViaWOptr(wo);
+				ManagerGLView::getGLView()->getActorLst()->eraseViaWOptr(wo);
 				this->missileActors.erase(missileIter);
+			}
 			explodeMissileActors.erase(explodeMissileActors.begin() + i);
 			//currentExplode->release();			
 

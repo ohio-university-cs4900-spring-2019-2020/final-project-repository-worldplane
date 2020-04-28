@@ -265,8 +265,8 @@ void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 	if (key.keysym.sym == SDLK_g) {
 		std::string missile(ManagerEnvironmentConfiguration::getSMM() + "/models/rocket/missle/missiles.obj");
 		WOPhysicX* missileWO = WOPhysicX::New(missile, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
-		//missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 3));
-		missileWO->setPosition(Vector(40, 15, 3));
+		missileWO->setPosition(Vector(actor->getPosition().x, actor->getPosition().y, actor->getPosition().z + 3));
+		//missileWO->setPosition(Vector(40, 15, 3));
 		missileWO->setLabel("Missile");
 		worldLst->push_back(missileWO);
 		actorLst->push_back(missileWO);
