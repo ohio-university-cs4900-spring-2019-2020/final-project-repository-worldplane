@@ -77,6 +77,7 @@ PhysicsCreate::PhysicsCreate() {
 	this->wheeledCarActor = nullptr;
 	this->mActor = nullptr;
 	this->tActor = nullptr;
+	this->gameOver = false;
 
 	PxSceneDesc s(this->physics->getTolerancesScale());
 	s.cpuDispatcher = PxDefaultCpuDispatcherCreate(1);
@@ -262,30 +263,7 @@ void PhysicsCreate::hitten() {
 
 			if (targetHealth <= 0) //GAME OVER
 			{
-				this->shutdown();
-				//PxShape* shape = this->physics->createShape(PxBoxGeometry(2.0f, 2.0f, 2.0f), *this->material);
-				////TODO: GAME OVER
-				//PxTransform pose = PxShapeExt::getGlobalPose(*shape, *this->tActor);
-				//PxGeometryHolder geom = shape->getGeometry();
-
-				//// create new actor from shape (to split compound)
-				//PxRigidDynamic* newActor = this->physics->createRigidDynamic(pose);
-
-				//PxShape* newShape = PxRigidActorExt::createExclusiveShape(*newActor, geom.any(), *this->material);
-
-				//newActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
-				//newActor->setLinearDamping(10.5f);
-				//newActor->setAngularDamping(0.5f);
-				//PxRigidBodyExt::updateMassAndInertia(*newActor, 1.0f);
-				//this->scene->addActor(*newActor);
-
-				//PxVec3 newExplosion = pose.p - this->tActor->getGlobalPose().p;
-				//PxReal newLen = newExplosion.normalize();
-				//newExplosion *= (damage / newLen);
-				//newActor->setLinearVelocity(newExplosion);
-				//newActor->setAngularVelocity(PxVec3(1, 2, 3));
-
-				//this->scene->removeActor(*this->tActor);
+				this->gameOver = true;
 				break;
 			}
 		}
@@ -362,3 +340,6 @@ int PhysicsCreate::getTargetHealth() {
 	return static_cast<int>(targetHealth);
 }
 
+bool PhysicsCreate::isGameOver() {
+	return this->gameOver;
+}

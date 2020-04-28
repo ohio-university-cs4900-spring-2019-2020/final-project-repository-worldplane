@@ -132,16 +132,26 @@ void GLViewNewModule::updateWorld()
 	GLView::updateWorld(); //Just call the parent's update world first.
 						   //If you want to add additional functionality, do it after
 						   //this call.
-	this->physEngine->removeActorsFromScene();
-	if (actor->getLabel() == "Jet") {
-		string health = to_string(physEngine->getTargetHealth()) + " / 200";
-		this->wcHealthStr->setText(health);
-	}
-	else {
-		string health = to_string(physEngine->getTargetHealth()) + " / 200";
-		this->jetHealthStr->setText(health);
-	}
 
+	if (this->physEngine->isGameOver()) {
+		if (this->ggStr == nullptr) {
+			this->updateHealthLabel();
+
+			actor = nullptr;
+			actorLst->clear();
+			this->ggStr = WOFTGLString::New(ManagerEnvironmentConfiguration::getSMM() + "/fonts/COMIC.TTF", 30);
+			this->ggStr->getModelT<MGLFTGLString>()->setFontColor(aftrColor4f(0.5f, 0.5f, 1.5f, 1.0f));
+			this->ggStr->getModelT<MGLFTGLString>()->setSize(50, 50);
+			this->ggStr->getModelT<MGLFTGLString>()->setText("GAME OVER");
+			this->ggStr->rotateAboutGlobalX(PI / 2);
+			this->ggStr->rotateAboutGlobalZ(-PI / 2);
+			this->ggStr->setPosition(Vector(40, 40, 40));
+			worldLst->push_back(this->ggStr);
+		}
+
+		return;
+	}
+	this->updateHealthLabel();
 	//transit
 	float dt = ManagerSDLTime::getTimeSinceLastPhysicsIteration() / 500.f;
 	physx::PxScene* scene = this->physEngine->getScene();
@@ -171,6 +181,17 @@ void GLViewNewModule::updateWorld()
 	}
 }
 
+void GLViewNewModule::updateHealthLabel() {
+	this->physEngine->removeActorsFromScene();
+	if (actor->getLabel() == "Jet") {
+		string health = to_string(physEngine->getTargetHealth()) + " / 200";
+		this->wcHealthStr->setText(health);
+	}
+	else {
+		string health = to_string(physEngine->getTargetHealth()) + " / 200";
+		this->jetHealthStr->setText(health);
+	}
+}
 
 void GLViewNewModule::onResizeWindow(GLsizei width, GLsizei height)
 {
@@ -202,6 +223,10 @@ void GLViewNewModule::onMouseMove(const SDL_MouseMotionEvent& e)
 void GLViewNewModule::onKeyDown(const SDL_KeyboardEvent& key)
 {
 	GLView::onKeyDown(key);
+
+	if (actor == nullptr) {
+		return;
+	}
 
 	if (key.keysym.sym == SDLK_q) {
 		this->physEngine->shutdown();

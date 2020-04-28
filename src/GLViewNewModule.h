@@ -39,7 +39,7 @@ public:
    virtual void onMouseMove( const SDL_MouseMotionEvent& e );
    virtual void onKeyDown( const SDL_KeyboardEvent& key );
    virtual void onKeyUp( const SDL_KeyboardEvent& key );
-   void createGrid();
+   void updateHealthLabel();
 
 protected:
    GLViewNewModule( const std::vector< std::string >& args );
@@ -52,6 +52,7 @@ protected:
    WOPhysXTriangularMesh* triangleMesh;
    WOFTGLString* wcHealthStr;
    WOFTGLString* jetHealthStr;
+   WOFTGLString* ggStr = nullptr;
 };
 
 /** \} */

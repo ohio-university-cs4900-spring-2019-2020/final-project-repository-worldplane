@@ -18,11 +18,12 @@ namespace Aftr {
 		physx::PxRigidDynamic* createDynamicPlane(WOPhysicX* data, bool isMActor);
 		void hitten();
 		void removeActorsFromScene();
-		int getTargetHealth();
 
 		physx::PxScene* getScene();
 		physx::PxCooking* getCooking();
 		physx::PxPhysics* getPhysics();
+		int getTargetHealth();
+		bool isGameOver();
 
 		// virtual functions from PxSimulationEventCallback
 		virtual void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs);
@@ -50,6 +51,8 @@ namespace Aftr {
 		std::vector<physx::PxRigidDynamic*> missileActors;
 		std::vector<physx::PxRigidDynamic*> explodeMissileActors;
 		std::vector<physx::PxRigidDynamic*> removedActors;
+
+		bool gameOver;
 	};
 }
 
