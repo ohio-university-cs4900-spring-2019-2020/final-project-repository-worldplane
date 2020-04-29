@@ -111,9 +111,9 @@ void GLViewFinalServer::onCreate()
 	}
 
 	//Set background music with 2D Sound when starting the program.
-	//this->smgr = SoundManager::init();
-	//this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
-	//this->smgr->getSound2D().at(0)->setVolume(0.5f);
+	this->smgr = SoundManager::init();
+	this->smgr->play2D("../irrKlang-64bit-1.6.0/music/ophelia.mp3", true, false, true);
+	this->smgr->getSound2D().at(0)->setVolume(0.5f);
 
 	/*this->triangleMesh->createGrid();*/
 	if (ManagerEnvironmentConfiguration::getVariableValue("NetServerListenPort") == "12683") {
